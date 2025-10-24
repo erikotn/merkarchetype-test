@@ -588,10 +588,14 @@
                 
                 // Calculate percentages for top 3 only (they sum to 100%)
                 const top3Total = top3.reduce((sum, [, score]) => sum + score, 0);
-                const top3WithPercentages = top3.map(([key, score]) => [
-                    key, 
-                    Math.round((score / top3Total) * 100)
-                ]);
+                
+                // If all scores are 0 (neutral answers), distribute evenly
+                const top3WithPercentages = top3Total === 0 
+                    ? top3.map(([key]) => [key, 33])
+                    : top3.map(([key, score]) => [
+                        key, 
+                        Math.round((score / top3Total) * 100)
+                    ]);
                 
                 // Ensure percentages sum exactly to 100 (handle rounding)
                 const percentageSum = top3WithPercentages.reduce((sum, [, perc]) => sum + perc, 0);
