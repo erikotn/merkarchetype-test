@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jung Merkarchetype Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function PieChart({ data }) {
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            let currentAngle = -90; // Start from top
+
+            const slices = data.map((item, index) => {
+                const percentage = (item.value / total) * 100;
+                const angle = (percentage / 100) * 360;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+                
+                const startRad = (startAngle * Math.PI) / 180;
+                const endRad = (endAngle * Math.PI) / 180;
+                
+                const x1 = 150 + 120 * Math.cos(startRad);
+                const y1 = 150 + 120 * Math.sin(startRad);
+                const x2 = 150 + 120 * Math.cos(endRad);
+                const y2 = 150 + 120 * Math.sin(endRad);
+                
+                const largeArc = angle > 180 ? 1 : 0;
+                
+                const pathData = [
+                    `M 150 150`,
+                    `L ${x1} ${y1}`,
+                    `A 120 120 0 ${largeArc} 1 ${x2} ${y2}`,
+                    `Z`
+                ].join(' ');
+                
+                currentAngle = endAngle;
+                
+                return (
+                    <path
+                        key={index}
+                        d={pathData}
+                        fill={item.color}
+                        stroke="white"
+                        strokeWidth="2"
+                    />
+                );
+            });
+
+            return (
+                <svg viewBox="0 0 300 300" className="w-full max-w-sm mx-auto">
+                    {slices}
+                </svg>
+            );
+        }
+
+        const archetypes = {
+            innocent: {
+                name: "De Onschuldige",
+                description: "Optimistisch, eerlijk en puur. Streeft naar geluk en eenvoud.",
+                traits: "Positiviteit, vertrouwen, eenvoud, nostalgie",
+                brands: "Dove, Coca-Cola, McDonald's"
+            },
+            explorer: {
+                name: "De Verkenner",
+                description: "Avontuurlijk, onafhankelijk en authentiek. Zoekt vrijheid en ontdekking.",
+                traits: "Avontuur, autonomie, authenticiteit, ontdekking",
+                brands: "Jeep, The North Face, Patagonia"
+            },
+            sage: {
+                name: "De Wijze",
+                description: "Intelligent, analytisch en waarheidszoekend. Deelt kennis en inzicht.",
+                traits: "Wijsheid, expertise, analyse, waarheid",
+                brands: "Google, BBC, Philips"
+            },
+            hero: {
+                name: "De Held",
+                description: "Moedig, competent en ambitieus. Inspireert tot prestatie en overwinning.",
+                traits: "Moed, doorzettingsvermogen, prestatie, kracht",
+                brands: "Nike, Duracell, FedEx"
+            },
+            outlaw: {
+                name: "De Rebel",
+                description: "Revolutionair, provocerend en bevrijdend. Doorbreekt regels en conventies.",
+                traits: "Rebellie, bevrijding, revolutie, provocatie",
+                brands: "Harley-Davidson, Virgin, Diesel"
+            },
+            magician: {
+                name: "De Magiër",
+                description: "Visionair, inspirerend en transformerend. Maakt dromen werkelijkheid.",
+                traits: "Transformatie, visie, inspiratie, innovatie",
+                brands: "Apple, Disney, Tesla"
+            },
+            regular: {
+                name: "De Gewone Mens",
+                description: "Toegankelijk, betrouwbaar en authentiek. Verbindt met iedereen.",
+                traits: "Toegankelijkheid, eerlijkheid, realisme, verbinding",
+                brands: "IKEA, Volkswagen, eBay"
+            },
+            lover: {
+                name: "De Minnaar",
+                description: "Sensueel, passievol en intiem. Creëert emotionele verbindingen.",
+                traits: "Passie, intimiteit, schoonheid, sensualiteit",
+                brands: "Chanel, Godiva, Victoria's Secret"
+            },
+            jester: {
+                name: "De Nar",
+                description: "Speels, humoristisch en spontaan. Brengt vreugde en plezier.",
+                traits: "Humor, plezier, spontaniteit, luchtigheid",
+                brands: "Ben & Jerry's, Old Spice, M&M's"
+            },
+            caregiver: {
+                name: "De Verzorger",
+                description: "Zorgzaam, genereus en beschermend. Helpt en ondersteunt anderen.",
+                traits: "Zorg, bescherming, generositeit, empathie",
+                brands: "Johnson & Johnson, Volvo, UNICEF"
+            },
+            ruler: {
+                name: "De Heerser",
+                description: "Autoritair, georganiseerd en statusbewust. Leidt en controleert.",
+                traits: "Leiderschap, controle, status, stabiliteit",
+                brands: "Mercedes-Benz, Rolex, Microsoft"
+            },
+            creator: {
+                name: "De Schepper",
+                description: "Creatief, innovatief en expressief. Bouwt iets van blijvende waarde.",
+                traits: "Creativiteit, innovatie, verbeelding, expressie",
+                brands: "Lego, Adobe, Caran d'Ache"
+            }
+        };
+
+        const questions = [
+            {
+                id: 1,
+                left: "We zijn speels en spontaan",
+                right: "We zijn serieus en verantwoordelijk",
+                archetypeMapping: {
+                    1: { jester: 2, explorer: 1 },
+                    2: { jester: 1, explorer: 1 },
+                    3: {},
+                    4: { ruler: 1, caregiver: 1 },
+                    5: { ruler: 2, caregiver: 2 }
+                }
+            },
+            {
+                id: 2,
+                left: "We streven naar vrijheid en avontuur",
+                right: "We streven naar veiligheid en zekerheid",
+                archetypeMapping: {
+                    1: { explorer: 2, outlaw: 1 },
+                    2: { explorer: 1, hero: 1 },
+                    3: {},
+                    4: { innocent: 1, caregiver: 1 },
+                    5: { innocent: 2, caregiver: 2 }
+                }
+            },
+            {
+                id: 3,
+                left: "Onze toon is vriendelijk en zorgzaam",
+                right: "Onze toon is sterk en beschermend",
+                archetypeMapping: {
+                    1: { caregiver: 2, lover: 1 },
+                    2: { caregiver: 1, regular: 1 },
+                    3: {},
+                    4: { hero: 1, ruler: 1 },
+                    5: { hero: 2, ruler: 1 }
+                }
+            },
+            {
+                id: 4,
+                left: "We willen de wereld verbeteren",
+                right: "We willen het leven gemakkelijker maken",
+                archetypeMapping: {
+                    1: { hero: 2, magician: 1, sage: 1 },
+                    2: { hero: 1, magician: 1 },
+                    3: {},
+                    4: { regular: 1, caregiver: 1 },
+                    5: { regular: 2, caregiver: 2 }
+                }
+            },
+            {
+                id: 5,
+                left: "We staan voor authenticiteit en echtheid",
+                right: "We staan voor succes en prestige",
+                archetypeMapping: {
+                    1: { regular: 2, explorer: 1, innocent: 1 },
+                    2: { regular: 1, explorer: 1 },
+                    3: {},
+                    4: { ruler: 1, hero: 1 },
+                    5: { ruler: 2, hero: 1 }
+                }
+            },
+            {
+                id: 6,
+                left: "We inspireren door verbeeldingskracht",
+                right: "We inspireren door logica en efficiëntie",
+                archetypeMapping: {
+                    1: { creator: 2, magician: 2 },
+                    2: { creator: 1, magician: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 1 }
+                }
+            },
+            {
+                id: 7,
+                left: "We zoeken verandering en revolutie",
+                right: "We zoeken stabiliteit en continuïteit",
+                archetypeMapping: {
+                    1: { outlaw: 2, magician: 1, hero: 1 },
+                    2: { outlaw: 1, magician: 1 },
+                    3: {},
+                    4: { innocent: 1, ruler: 1, caregiver: 1 },
+                    5: { innocent: 2, ruler: 1, caregiver: 1 }
+                }
+            },
+            {
+                id: 8,
+                left: "Onze communicatie is warm en menselijk",
+                right: "Onze communicatie is cool en professioneel",
+                archetypeMapping: {
+                    1: { caregiver: 2, lover: 1, regular: 1 },
+                    2: { caregiver: 1, regular: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 1 }
+                }
+            },
+            {
+                id: 9,
+                left: "We richten ons op gemeenschap en verbinding",
+                right: "We richten ons op prestatie en status",
+                archetypeMapping: {
+                    1: { regular: 2, caregiver: 2 },
+                    2: { regular: 1, caregiver: 1 },
+                    3: {},
+                    4: { hero: 1, ruler: 1 },
+                    5: { hero: 2, ruler: 2 }
+                }
+            },
+            {
+                id: 10,
+                left: "We helpen mensen hun potentieel te zien",
+                right: "We helpen mensen zich veilig te voelen",
+                archetypeMapping: {
+                    1: { magician: 2, hero: 1, sage: 1 },
+                    2: { magician: 1, sage: 1 },
+                    3: {},
+                    4: { caregiver: 1, innocent: 1 },
+                    5: { caregiver: 2, innocent: 2 }
+                }
+            },
+            {
+                id: 11,
+                left: "We geloven in dromen en magie",
+                right: "We geloven in feiten en realiteit",
+                archetypeMapping: {
+                    1: { magician: 2, creator: 1, lover: 1 },
+                    2: { magician: 1, creator: 1 },
+                    3: {},
+                    4: { sage: 1, regular: 1 },
+                    5: { sage: 2, regular: 2 }
+                }
+            },
+            {
+                id: 12,
+                left: "We willen dat klanten zich vrij voelen",
+                right: "We willen dat klanten zich beschermd weten",
+                archetypeMapping: {
+                    1: { explorer: 2, outlaw: 1 },
+                    2: { explorer: 1, hero: 1 },
+                    3: {},
+                    4: { caregiver: 1, innocent: 1 },
+                    5: { caregiver: 2, innocent: 2 }
+                }
+            },
+            {
+                id: 13,
+                left: "We spreken als een vriend",
+                right: "We spreken als een expert",
+                archetypeMapping: {
+                    1: { regular: 2, jester: 1 },
+                    2: { regular: 1, caregiver: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 1 }
+                }
+            },
+            {
+                id: 14,
+                left: "We moedigen avontuur en ontdekking aan",
+                right: "We moedigen orde en structuur aan",
+                archetypeMapping: {
+                    1: { explorer: 2, hero: 1 },
+                    2: { explorer: 1, creator: 1 },
+                    3: {},
+                    4: { ruler: 1, innocent: 1 },
+                    5: { ruler: 2, sage: 1 }
+                }
+            },
+            {
+                id: 15,
+                left: "We brengen originaliteit",
+                right: "We brengen betrouwbaarheid",
+                archetypeMapping: {
+                    1: { creator: 2, outlaw: 1, magician: 1 },
+                    2: { creator: 1, outlaw: 1 },
+                    3: {},
+                    4: { regular: 1, innocent: 1, caregiver: 1 },
+                    5: { regular: 2, innocent: 2, caregiver: 1 }
+                }
+            },
+            {
+                id: 16,
+                left: "We streven naar perfectie",
+                right: "We streven naar authenticiteit",
+                archetypeMapping: {
+                    1: { ruler: 2, hero: 1, sage: 1 },
+                    2: { ruler: 1, hero: 1 },
+                    3: {},
+                    4: { regular: 1, explorer: 1 },
+                    5: { regular: 2, explorer: 2 }
+                }
+            },
+            {
+                id: 17,
+                left: "We staan voor discipline en beheersing",
+                right: "We staan voor passie en emotie",
+                archetypeMapping: {
+                    1: { ruler: 2, sage: 1 },
+                    2: { ruler: 1, hero: 1 },
+                    3: {},
+                    4: { lover: 1, outlaw: 1, jester: 1 },
+                    5: { lover: 2, outlaw: 1, jester: 1 }
+                }
+            },
+            {
+                id: 18,
+                left: "We willen anderen inspireren",
+                right: "We willen anderen dienen",
+                archetypeMapping: {
+                    1: { hero: 2, magician: 1, sage: 1 },
+                    2: { hero: 1, magician: 1 },
+                    3: {},
+                    4: { caregiver: 1, regular: 1 },
+                    5: { caregiver: 2, regular: 2 }
+                }
+            },
+            {
+                id: 19,
+                left: "We waarderen speelsheid",
+                right: "We waarderen wijsheid",
+                archetypeMapping: {
+                    1: { jester: 2, innocent: 1 },
+                    2: { jester: 1, lover: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 1 }
+                }
+            },
+            {
+                id: 20,
+                left: "We geloven in rebellie",
+                right: "We geloven in traditie",
+                archetypeMapping: {
+                    1: { outlaw: 2, creator: 1 },
+                    2: { outlaw: 1, hero: 1 },
+                    3: {},
+                    4: { innocent: 1, ruler: 1, caregiver: 1 },
+                    5: { innocent: 2, ruler: 1, caregiver: 1 }
+                }
+            },
+            {
+                id: 21,
+                left: "Onze klanten zien ons als een gids",
+                right: "Onze klanten zien ons als een bondgenoot",
+                archetypeMapping: {
+                    1: { sage: 2, hero: 1, magician: 1 },
+                    2: { sage: 1, hero: 1 },
+                    3: {},
+                    4: { regular: 1, caregiver: 1 },
+                    5: { regular: 2, caregiver: 2 }
+                }
+            },
+            {
+                id: 22,
+                left: "We zijn visionair en idealistisch",
+                right: "We zijn praktisch en realistisch",
+                archetypeMapping: {
+                    1: { magician: 2, hero: 1, creator: 1 },
+                    2: { magician: 1, hero: 1 },
+                    3: {},
+                    4: { regular: 1, sage: 1 },
+                    5: { regular: 2, sage: 1 }
+                }
+            },
+            {
+                id: 23,
+                left: "We streven naar groei en zelfontplooiing",
+                right: "We streven naar comfort en voorspelbaarheid",
+                archetypeMapping: {
+                    1: { explorer: 2, hero: 1, magician: 1 },
+                    2: { explorer: 1, hero: 1 },
+                    3: {},
+                    4: { innocent: 1, caregiver: 1 },
+                    5: { innocent: 2, caregiver: 2 }
+                }
+            },
+            {
+                id: 24,
+                left: "We spreken met humor",
+                right: "We spreken met ernst",
+                archetypeMapping: {
+                    1: { jester: 2, lover: 1 },
+                    2: { jester: 1, regular: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1, hero: 1 },
+                    5: { sage: 2, ruler: 1, hero: 1 }
+                }
+            },
+            {
+                id: 25,
+                left: "We positioneren ons als uitdager",
+                right: "We positioneren ons als leider",
+                archetypeMapping: {
+                    1: { outlaw: 2, hero: 1 },
+                    2: { outlaw: 1, hero: 1 },
+                    3: {},
+                    4: { ruler: 1, sage: 1 },
+                    5: { ruler: 2, sage: 1 }
+                }
+            },
+            {
+                id: 26,
+                left: "We draaien om emotie",
+                right: "We draaien om ratio",
+                archetypeMapping: {
+                    1: { lover: 2, jester: 1, caregiver: 1 },
+                    2: { lover: 1, caregiver: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 2 }
+                }
+            },
+            {
+                id: 27,
+                left: "We zijn verleidelijk en aantrekkelijk",
+                right: "We zijn nuchter en functioneel",
+                archetypeMapping: {
+                    1: { lover: 2, magician: 1 },
+                    2: { lover: 1, creator: 1 },
+                    3: {},
+                    4: { regular: 1, sage: 1 },
+                    5: { regular: 2, sage: 1 }
+                }
+            },
+            {
+                id: 28,
+                left: "We willen anderen verrassen",
+                right: "We willen anderen geruststellen",
+                archetypeMapping: {
+                    1: { magician: 2, jester: 1, outlaw: 1 },
+                    2: { magician: 1, creator: 1 },
+                    3: {},
+                    4: { caregiver: 1, innocent: 1 },
+                    5: { caregiver: 2, innocent: 2 }
+                }
+            },
+            {
+                id: 29,
+                left: "We bouwen ons merk op intuïtie",
+                right: "We bouwen ons merk op analyse",
+                archetypeMapping: {
+                    1: { creator: 2, magician: 1, lover: 1 },
+                    2: { creator: 1, magician: 1 },
+                    3: {},
+                    4: { sage: 1, ruler: 1 },
+                    5: { sage: 2, ruler: 2 }
+                }
+            },
+            {
+                id: 30,
+                left: "We streven naar vrijheid van expressie",
+                right: "We streven naar controle en orde",
+                archetypeMapping: {
+                    1: { creator: 2, outlaw: 1, explorer: 1 },
+                    2: { creator: 1, outlaw: 1 },
+                    3: {},
+                    4: { ruler: 1, sage: 1 },
+                    5: { ruler: 2, sage: 1 }
+                }
+            }
+        ];
+
+        function MerkarchetypeTest() {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [showResults, setShowResults] = useState(false);
+            const [results, setResults] = useState(null);
+
+            const handleAnswer = (questionId, value) => {
+                setAnswers(prev => ({
+                    ...prev,
+                    [questionId]: value
+                }));
+            };
+
+            const calculateResults = () => {
+                const scores = {
+                    innocent: 0, explorer: 0, sage: 0, hero: 0,
+                    outlaw: 0, magician: 0, regular: 0, lover: 0,
+                    jester: 0, caregiver: 0, ruler: 0, creator: 0
+                };
+
+                questions.forEach(question => {
+                    const answer = answers[question.id];
+                    if (answer && question.archetypeMapping[answer]) {
+                        const mapping = question.archetypeMapping[answer];
+                        Object.keys(mapping).forEach(archetype => {
+                            scores[archetype] += mapping[archetype];
+                        });
+                    }
+                });
+
+                // Sort all archetypes by score
+                const sorted = Object.entries(scores)
+                    .sort(([, a], [, b]) => b - a);
+
+                // Get top 3
+                const top3 = sorted.slice(0, 3);
+                
+                // Calculate percentages for top 3 only (they sum to 100%)
+                const top3Total = top3.reduce((sum, [, score]) => sum + score, 0);
+                const top3WithPercentages = top3.map(([key, score]) => [
+                    key, 
+                    Math.round((score / top3Total) * 100)
+                ]);
+                
+                // Ensure percentages sum exactly to 100 (handle rounding)
+                const percentageSum = top3WithPercentages.reduce((sum, [, perc]) => sum + perc, 0);
+                if (percentageSum !== 100) {
+                    top3WithPercentages[0][1] += (100 - percentageSum);
+                }
+
+                setResults({
+                    primary: top3WithPercentages[0],
+                    secondary: top3WithPercentages[1],
+                    tertiary: top3WithPercentages[2],
+                    rawScores: scores
+                });
+                setShowResults(true);
+            };
+
+            const generateProfile = () => {
+                const [primaryKey] = results.primary;
+                const [secondaryKey] = results.secondary;
+                const [tertiaryKey] = results.tertiary;
+
+                const answerPatterns = {
+                    playful: answers[1] <= 2,
+                    serious: answers[1] >= 4,
+                    adventurous: answers[2] <= 2,
+                    secure: answers[2] >= 4,
+                    caring: answers[3] <= 2,
+                    strong: answers[3] >= 4,
+                    worldImproving: answers[4] <= 2,
+                    lifeEasing: answers[4] >= 4,
+                    authentic: answers[5] <= 2,
+                    prestigious: answers[5] >= 4,
+                    imaginative: answers[6] <= 2,
+                    logical: answers[6] >= 4,
+                    revolutionary: answers[7] <= 2,
+                    stable: answers[7] >= 4,
+                    warm: answers[8] <= 2,
+                    professional: answers[8] >= 4,
+                    communityFocused: answers[9] <= 2,
+                    achievementFocused: answers[9] >= 4,
+                    visionary: answers[22] <= 2,
+                    practical: answers[22] >= 4,
+                    emotional: answers[26] <= 2,
+                    rational: answers[26] >= 4
+                };
+
+                let profile = "Jouw merk kenmerkt zich door ";
+
+                if (answerPatterns.revolutionary) {
+                    profile += "een gedreven focus op verandering en het doorbreken van conventies";
+                } else if (answerPatterns.stable) {
+                    profile += "een verankering in stabiliteit, continuïteit en betrouwbaarheid";
+                } else {
+                    profile += "een evenwichtige balans tussen stabiliteit en vernieuwing";
+                }
+
+                profile += ". ";
+
+                if (answerPatterns.emotional) {
+                    profile += "Emotionele resonantie en authentieke verbindingen vormen het hart van jullie merkbeleving";
+                } else if (answerPatterns.rational) {
+                    profile += "Ratio, logica en meetbare waarde zijn de fundamenten van jullie propositie";
+                } else {
+                    profile += "Jullie weten emotionele impact te combineren met rationele overtuigingskracht";
+                }
+
+                profile += ". ";
+
+                if (answerPatterns.adventurous) {
+                    profile += "Het merk inspireert tot vrijheid, ontdekking en het aangaan van nieuwe uitdagingen";
+                } else if (answerPatterns.secure) {
+                    profile += "Veiligheid, vertrouwen en zekerheid zijn kernwaarden in jullie merkbelofte";
+                } else {
+                    profile += "Het merk biedt een veilige basis voor groei en exploratie";
+                }
+
+                profile += ". ";
+
+                if (answerPatterns.visionary) {
+                    profile += "Met een visionair karakter en grote ambities tonen jullie mensen wat mogelijk is";
+                } else if (answerPatterns.practical) {
+                    profile += "Door praktisch en realistisch te blijven, leveren jullie tastbare waarde";
+                } else {
+                    profile += "Het merk verenigt aspiratie met realiteit en dromen met daden";
+                }
+
+                profile += ".";
+
+                return profile;
+            };
+
+            const getArchetypeExplanation = () => {
+                const [primaryKey, primaryPercent] = results.primary;
+                const [secondaryKey, secondaryPercent] = results.secondary;
+                const [tertiaryKey, tertiaryPercent] = results.tertiary;
+
+                const primary = archetypes[primaryKey];
+                const secondary = archetypes[secondaryKey];
+                const tertiary = archetypes[tertiaryKey];
+
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-2xl font-bold text-indigo-900 mb-3">
+                                Primair Archetype: {primary.name} ({primaryPercent}%)
+                            </h3>
+                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {primary.description}</p>
+                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {primary.traits}</p>
+                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {primary.brands}</p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xl font-bold text-indigo-800 mb-3">
+                                Secundair Archetype: {secondary.name} ({secondaryPercent}%)
+                            </h3>
+                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {secondary.description}</p>
+                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {secondary.traits}</p>
+                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {secondary.brands}</p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-lg font-bold text-indigo-700 mb-3">
+                                Tertiair Archetype: {tertiary.name} ({tertiaryPercent}%)
+                            </h3>
+                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {tertiary.description}</p>
+                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {tertiary.traits}</p>
+                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {tertiary.brands}</p>
+                        </div>
+
+                        <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500 mt-8">
+                            <h4 className="font-bold text-indigo-900 mb-3">Geïntegreerde Merkidentiteit</h4>
+                            <p className="text-gray-700 leading-relaxed">
+                                Jouw merk combineert de kracht van <strong>{primary.name}</strong> als leidend archetype, 
+                                versterkt door elementen van <strong>{secondary.name}</strong> en <strong>{tertiary.name}</strong>. 
+                                Deze combinatie creëert een unieke merkpersoonlijkheid die {primary.description.toLowerCase()} 
+                                terwijl het ook {secondary.description.toLowerCase().split('.')[0]}. 
+                                Dit maakt jullie merk onderscheidend en authentiek in jullie positionering.
+                            </p>
+                        </div>
+                    </div>
+                );
+            };
+
+            if (showResults && results) {
+                return (
+                    <div className="min-h-screen py-12 px-4">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                                <h1 className="text-4xl font-bold text-center mb-2 text-indigo-900">
+                                    Jouw Merkarchetype Profiel
+                                </h1>
+                                <p className="text-center text-gray-600 mb-8">
+                                    Gebaseerd op de Jung Merkarchetypen
+                                </p>
+
+                                <div className="mb-10">
+                                    <h2 className="text-2xl font-bold mb-4 text-indigo-900">Merkprofiel</h2>
+                                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
+                                        <p className="text-gray-800 leading-relaxed text-lg">
+                                            {generateProfile()}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-10">
+                                    <h2 className="text-2xl font-bold mb-6 text-indigo-900">Jouw Archetype Verdeling</h2>
+                                    <div className="flex flex-col md:flex-row items-center gap-8">
+                                        <div className="w-full md:w-1/2">
+                                            <PieChart data={[
+                                                { name: archetypes[results.primary[0]].name, value: results.primary[1], color: '#6366f1' },
+                                                { name: archetypes[results.secondary[0]].name, value: results.secondary[1], color: '#8b5cf6' },
+                                                { name: archetypes[results.tertiary[0]].name, value: results.tertiary[1], color: '#a78bfa' }
+                                            ]} />
+                                        </div>
+                                        <div className="w-full md:w-1/2 space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-indigo-600"></div>
+                                                <div>
+                                                    <span className="font-bold text-gray-900">{archetypes[results.primary[0]].name}</span>
+                                                    <span className="text-gray-600 ml-2">{results.primary[1]}%</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-purple-600"></div>
+                                                <div>
+                                                    <span className="font-bold text-gray-900">{archetypes[results.secondary[0]].name}</span>
+                                                    <span className="text-gray-600 ml-2">{results.secondary[1]}%</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-purple-400"></div>
+                                                <div>
+                                                    <span className="font-bold text-gray-900">{archetypes[results.tertiary[0]].name}</span>
+                                                    <span className="text-gray-600 ml-2">{results.tertiary[1]}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold mb-6 text-indigo-900">Jouw Archetypen in Detail</h2>
+                                    {getArchetypeExplanation()}
+                                </div>
+
+                                <div className="text-center pt-6 border-t border-gray-200">
+                                    <button
+                                        onClick={() => {
+                                            setShowResults(false);
+                                            setCurrentQuestion(0);
+                                            setAnswers({});
+                                            setResults(null);
+                                        }}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                                    >
+                                        Nieuwe Assessment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const progress = (Object.keys(answers).length / questions.length) * 100;
+            const currentQ = questions[currentQuestion];
+            const isAnswered = answers[currentQ.id] !== undefined;
+
+            return (
+                <div className="min-h-screen py-12 px-4">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+                            <h1 className="text-4xl font-bold text-center mb-2 text-indigo-900">
+                                Jung Merkarchetype Assessment
+                            </h1>
+                            <p className="text-center text-gray-600 mb-8">
+                                Ontdek welk archetype het beste bij jouw merk past
+                            </p>
+
+                            <div className="mb-8">
+                                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>Vraag {currentQuestion + 1} van {questions.length}</span>
+                                    <span>{Math.round(progress)}% compleet</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                        className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${progress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div className="mb-8">
+                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg mb-6">
+                                    <p className="text-sm text-gray-600 mb-4 text-center">
+                                        Geef aan in hoeverre de linker of rechter stelling het beste bij jouw merk past
+                                    </p>
+                                    <div className="grid grid-cols-5 gap-2 mb-4">
+                                        {[1, 2, 3, 4, 5].map((value) => (
+                                            <button
+                                                key={value}
+                                                onClick={() => handleAnswer(currentQ.id, value)}
+                                                className={`py-3 px-2 rounded-lg font-medium transition-all ${
+                                                    answers[currentQ.id] === value
+                                                        ? 'bg-indigo-600 text-white shadow-lg scale-105'
+                                                        : 'bg-white hover:bg-indigo-100 text-gray-700'
+                                                }`}
+                                            >
+                                                {value}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-left text-gray-700 font-medium flex-1">
+                                            {currentQ.left}
+                                        </span>
+                                        <span className="text-right text-gray-700 font-medium flex-1">
+                                            {currentQ.right}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <button
+                                    onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                                    disabled={currentQuestion === 0}
+                                    className="bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                                >
+                                    Vorige
+                                </button>
+                                
+                                {currentQuestion < questions.length - 1 ? (
+                                    <button
+                                        onClick={() => setCurrentQuestion(currentQuestion + 1)}
+                                        disabled={!isAnswered}
+                                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                                    >
+                                        Volgende
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={calculateResults}
+                                        disabled={Object.keys(answers).length < questions.length}
+                                        className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                                    >
+                                        Bekijk Resultaten
+                                    </button>
+                                )}
+                            </div>
+
+                            {Object.keys(answers).length < questions.length && currentQuestion === questions.length - 1 && (
+                                <p className="text-center text-amber-600 mt-4 text-sm">
+                                    Beantwoord alle vragen om je resultaten te zien
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<MerkarchetypeTest />, document.getElementById('root'));
+    </script>
+</body>
+</html>
