@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jung Merkarchetype Assessment</title>
+    <title>Dizain Merkarchetype Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
@@ -66,75 +66,123 @@
         const archetypes = {
             innocent: {
                 name: "De Onschuldige",
-                description: "Optimistisch, eerlijk en puur. Streeft naar geluk en eenvoud.",
+                subtitle: "puur, optimistisch, eenvoudig",
+                description: "De Onschuldige staat voor puurheid, optimisme en eenvoud. Dit archetype gelooft in het goede en wil zowel zichzelf als anderen gelukkig maken. Het is een betrouwbaar, eerlijk en nostalgisch merk dat veiligheid en positiviteit uitstraalt.",
+                promise: "Het komt allemaal goed.",
+                communication: "De Onschuldige communiceert op een eenvoudige, heldere en positieve manier. De toon is optimistisch en geruststellend, zonder cynisme of complexiteit. Beeldgebruik is clean, licht en vaak nostalgisch. Boodschappen zijn rechtdoorzee en bieden troost en zekerheid.",
                 traits: "Positiviteit, vertrouwen, eenvoud, nostalgie",
-                brands: "Dove, Coca-Cola, McDonald's"
+                brands: "Campina, Friesche Vlag, Verkade, Dove, Coca-Cola",
+                color: "#81c784"
             },
             explorer: {
-                name: "De Verkenner",
-                description: "Avontuurlijk, onafhankelijk en authentiek. Zoekt vrijheid en ontdekking.",
+                name: "De Ontdekker",
+                subtitle: "vrijheid, avontuur, ontdekking",
+                description: "De Ontdekker staat voor vrijheid, avontuur en ontdekking. Dit archetype wil grenzen verleggen, nieuwe ervaringen opdoen en authentiek zijn. Het is onafhankelijk, moedig en pionierend, altijd op zoek naar wat er verder nog te ontdekken valt.",
+                promise: "Ontdek jezelf en de wereld.",
+                communication: "De Ontdekker communiceert inspirerend en bevrijdend. De toon is avontuurlijk en nodigt uit tot actie. Beelden tonen wijde landschappen, reizen en grenzeloosheid. De boodschap gaat over zelfontdekking, individualiteit en het verleggen van grenzen.",
                 traits: "Avontuur, autonomie, authenticiteit, ontdekking",
-                brands: "Jeep, The North Face, Patagonia"
+                brands: "KLM, ANWB, Staatsloterij, The North Face, Jeep",
+                color: "#aed581"
             },
             sage: {
                 name: "De Wijze",
-                description: "Intelligent, analytisch en waarheidszoekend. Deelt kennis en inzicht.",
+                subtitle: "kennis, expertise, betrouwbaarheid",
+                description: "De Wijze staat voor kennis, waarheid en intelligentie. Dit archetype streeft ernaar de wereld te begrijpen en die kennis te delen met anderen. Het is een expert, een betrouwbare bron van informatie die analytisch en doordacht te werk gaat.",
+                promise: "De waarheid zal je vrijmaken.",
+                communication: "De Wijze communiceert helder, informatief en onderbouwd. De toon is educatief en gezaghebbend, maar niet betuttelend. Feiten, onderzoek en expertise staan centraal. Dit merk positioneert zich als thought leader en betrouwbare kennisbron.",
                 traits: "Wijsheid, expertise, analyse, waarheid",
-                brands: "Google, BBC, Philips"
+                brands: "NOS, NU.nl, Douwe Egberts, BBC, Google",
+                color: "#4caf50"
             },
             hero: {
                 name: "De Held",
-                description: "Moedig, competent en ambitieus. Inspireert tot prestatie en overwinning.",
+                subtitle: "moed, prestatie, overwinning",
+                description: "De Held staat voor moed, prestatie en overwinning. Dit archetype wil impact maken en uitdagingen overwinnen. Het is dapper, sterk en gedreven naar uitmuntendheid.",
+                promise: "Waar een wil is, is een weg.",
+                communication: "De Held communiceert motiverend, krachtig en doelgericht. De toon is inspirerend en roept op tot actie en prestatie. Beelden tonen overwinning, doorzettingsvermogen en succes. Dit merk daagt mensen uit het beste uit zichzelf te halen.",
                 traits: "Moed, doorzettingsvermogen, prestatie, kracht",
-                brands: "Nike, Duracell, FedEx"
+                brands: "Jumbo, Rabobank, Heineken, Nike, Adidas, FedEx",
+                color: "#e57373"
             },
             outlaw: {
                 name: "De Rebel",
-                description: "Revolutionair, provocerend en bevrijdend. Doorbreekt regels en conventies.",
+                subtitle: "regelbreker, anders, disruptief",
+                description: "De Rebel staat voor rebellie, bevrijding en revolutie. Dit archetype daagt de status quo uit en durft te provoceren. Het is radicaal, disruptief en authentiek rebels.",
+                promise: "De regels zijn er om gebroken te worden.",
+                communication: "De Rebel communiceert provocerend, direct en zonder compromissen. De toon is rebels en uitdagend, soms zelfs confronterend. Beeldgebruik is ruig, edgy en onconventioneel. Dit merk spreekt taboes aan en kiest bewust positie.",
                 traits: "Rebellie, bevrijding, revolutie, provocatie",
-                brands: "Harley-Davidson, Virgin, Diesel"
+                brands: "G-Star RAW, Tony's Chocolonely, Transavia, Harley-Davidson, Virgin",
+                color: "#ffb74d"
             },
             magician: {
                 name: "De Magiër",
-                description: "Visionair, inspirerend en transformerend. Maakt dromen werkelijkheid.",
+                subtitle: "transformatie, visie, wonder",
+                description: "De Magiër staat voor transformatie, visie en het waar maken van dromen. Dit archetype inspireert door ogenschijnlijk onmogelijke dingen mogelijk te maken. Het is charismatisch, visionair en transformerend.",
+                promise: "Alles is mogelijk.",
+                communication: "De Magiër communiceert mysterieus, inspirerend en visionair. De toon is magisch en belooft transformatie. Beelden zijn vaak sprookjesachtig, verbeeldingsvol of toekomstgericht. De communicatie gaat over dromen die werkelijkheid worden.",
                 traits: "Transformatie, visie, inspiratie, innovatie",
-                brands: "Apple, Disney, Tesla"
+                brands: "Efteling, Philips, Disney, Tesla",
+                color: "#ff9800"
             },
             regular: {
-                name: "De Gewone Mens",
-                description: "Toegankelijk, betrouwbaar en authentiek. Verbindt met iedereen.",
+                name: "De Bondgenoot",
+                subtitle: "erbij horen, toegankelijk, realisme",
+                description: "De Bondgenoot staat voor verbinding, eerlijkheid en toegankelijkheid. Dit archetype wil erbij horen en echte connectie maken met anderen. Het is betrouwbaar, down-to-earth en herkenbaar.",
+                promise: "Wij begrijpen je.",
+                communication: "De Bondgenoot communiceert toegankelijk, herkenbaar en zonder poespas. De toon is vriendelijk, eerlijk en praktisch. Beelden tonen gewone mensen in alledaagse situaties. Dit merk spreekt de taal van de doelgroep en toont begrip voor hun uitdagingen.",
                 traits: "Toegankelijkheid, eerlijkheid, realisme, verbinding",
-                brands: "IKEA, Volkswagen, eBay"
+                brands: "Albert Heijn, HEMA, Gamma, Kruidvat, IKEA, eBay",
+                color: "#9575cd"
             },
             lover: {
-                name: "De Minnaar",
-                description: "Sensueel, passievol en intiem. Creëert emotionele verbindingen.",
+                name: "De Verleider",
+                subtitle: "intimiteit, plezier, sensualiteit",
+                description: "De Verleider staat voor passie, intimiteit en schoonheid. Dit archetype streeft naar nabijheid, genot en betekenisvolle ervaringen. Het is sensueel, warm en gepassioneerd.",
+                promise: "Geniet van het moment.",
+                communication: "De Verleider communiceert sensueel, emotioneel en intiem. De toon is warm, verleidelijk en persoonlijk. Beelden zijn esthetisch, romantisch en appelleren aan de zintuigen. De communicatie gaat over genieten, verwennen en het ervaren van schoonheid.",
                 traits: "Passie, intimiteit, schoonheid, sensualiteit",
-                brands: "Chanel, Godiva, Victoria's Secret"
+                brands: "Rituals, De Bijenkorf, Spa, Chanel, Godiva",
+                color: "#f06292"
             },
             jester: {
-                name: "De Nar",
-                description: "Speels, humoristisch en spontaan. Brengt vreugde en plezier.",
+                name: "De Joker",
+                subtitle: "plezier, humor, luchtigheid",
+                description: "De Joker staat voor plezier, humor en luchtigheid. Dit archetype wil het leven vieren en anderen aan het lachen maken. Het is speels, optimistisch en spontaan.",
+                promise: "Het leven is een feest.",
+                communication: "De Joker communiceert humoristisch, energiek en ongedwongen. De toon is lichtvoetig, grappig en entertainend. Beelden zijn kleurrijk, speels en onverwacht. De communicatie durft gek te doen en neemt zichzelf niet te serieus.",
                 traits: "Humor, plezier, spontaniteit, luchtigheid",
-                brands: "Ben & Jerry's, Old Spice, M&M's"
+                brands: "Coolblue, Ben, bol.com, Old Spice, M&M's",
+                color: "#ba68c8"
             },
             caregiver: {
-                name: "De Verzorger",
-                description: "Zorgzaam, genereus en beschermend. Helpt en ondersteunt anderen.",
+                name: "De Beschermer",
+                subtitle: "zorg, bescherming, medeleven",
+                description: "De Beschermer staat voor zorg, bescherming en compassie. Dit archetype wil anderen helpen en beschermen. Het is warm, ondersteunend en altruïstisch.",
+                promise: "Ik zorg voor je.",
+                communication: "De Beschermer communiceert empathisch, geruststellend en ondersteunend. De toon is zorgzaam, warm en betrokken. Beelden tonen zorg, bescherming en menselijke verbinding. Dit merk stelt zich dienstbaar op en spreekt over verantwoordelijkheid en toewijding.",
                 traits: "Zorg, bescherming, generositeit, empathie",
-                brands: "Johnson & Johnson, Volvo, UNICEF"
+                brands: "Zilveren Kruis, CZ, Rode Kruis, VGZ, Volvo, Unicef",
+                color: "#7986cb"
             },
             ruler: {
-                name: "De Heerser",
-                description: "Autoritair, georganiseerd en statusbewust. Leidt en controleert.",
+                name: "De Leider",
+                subtitle: "controle, leiderschap, status",
+                description: "De Leider staat voor controle, leiderschap en succes. Dit archetype streeft naar het creëren van welvaart en stabiliteit. Het is dominant, georganiseerd en exclusief.",
+                promise: "Macht creëert mogelijkheden.",
+                communication: "De Leider communiceert zelfverzekerd, autoritair en prestigieus. De toon is formeel, krachtig en gebiedend. Beelden tonen luxe, succes en exclusiviteit. Dit merk positioneert zich als marktleider en statusmerk.",
                 traits: "Leiderschap, controle, status, stabiliteit",
-                brands: "Mercedes-Benz, Rolex, Microsoft"
+                brands: "ABN AMRO, ING, Nationale Nederlanden, Mercedes-Benz, Rolex",
+                color: "#64b5f6"
             },
             creator: {
-                name: "De Schepper",
-                description: "Creatief, innovatief en expressief. Bouwt iets van blijvende waarde.",
+                name: "De Creator",
+                subtitle: "innovatie, creativiteit, verbeelding",
+                description: "De Creator staat voor creativiteit, innovatie en verbeelding. Dit archetype wil iets waardevols en blijvends creëren. Het is creatief, innovatief en authentiek non-conform.",
+                promise: "Als je het kunt bedenken, kun je het maken.",
+                communication: "De Creator communiceert inspirerend, origineel en kunstzinnig. De toon is creatief, innovatief en soms onconventioneel. Beelden zijn vaak artistiek, vernieuwend of design-gedreven. Dit merk moedigt aan om dingen te maken en jezelf uit te drukken.",
                 traits: "Creativiteit, innovatie, verbeelding, expressie",
-                brands: "Lego, Adobe, Caran d'Ache"
+                brands: "ASML, Coolblue, Apple, Lego, Adobe",
+                color: "#4dd0e1"
             }
         };
 
@@ -645,40 +693,56 @@
                 const tertiary = archetypes[tertiaryKey];
 
                 return (
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-2xl font-bold text-indigo-900 mb-3">
+                    <div className="space-y-8">
+                        <div className="border-l-4 pl-6" style={{ borderColor: primary.color }}>
+                            <h3 className="text-2xl font-bold mb-3" style={{ color: primary.color }}>
                                 Primair Archetype: {primary.name} ({primaryPercent}%)
                             </h3>
-                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {primary.description}</p>
-                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {primary.traits}</p>
-                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {primary.brands}</p>
+                            <p className="text-sm text-gray-500 italic mb-3">{primary.subtitle}</p>
+                            <p className="text-gray-700 mb-3 leading-relaxed">{primary.description}</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-3">
+                                <p className="text-gray-800 mb-2"><strong>Kernbelofte:</strong> "{primary.promise}"</p>
+                                <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {primary.traits}</p>
+                            </div>
+                            <p className="text-gray-700 mb-3 leading-relaxed"><strong>Communicatie:</strong> {primary.communication}</p>
+                            <p className="text-gray-600 text-sm"><strong>Voorbeeldmerken:</strong> {primary.brands}</p>
                         </div>
 
-                        <div>
-                            <h3 className="text-xl font-bold text-indigo-800 mb-3">
+                        <div className="border-l-4 pl-6" style={{ borderColor: secondary.color }}>
+                            <h3 className="text-xl font-bold mb-3" style={{ color: secondary.color }}>
                                 Secundair Archetype: {secondary.name} ({secondaryPercent}%)
                             </h3>
-                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {secondary.description}</p>
-                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {secondary.traits}</p>
-                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {secondary.brands}</p>
+                            <p className="text-sm text-gray-500 italic mb-3">{secondary.subtitle}</p>
+                            <p className="text-gray-700 mb-3 leading-relaxed">{secondary.description}</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-3">
+                                <p className="text-gray-800 mb-2"><strong>Kernbelofte:</strong> "{secondary.promise}"</p>
+                                <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {secondary.traits}</p>
+                            </div>
+                            <p className="text-gray-700 mb-3 leading-relaxed"><strong>Communicatie:</strong> {secondary.communication}</p>
+                            <p className="text-gray-600 text-sm"><strong>Voorbeeldmerken:</strong> {secondary.brands}</p>
                         </div>
 
-                        <div>
-                            <h3 className="text-lg font-bold text-indigo-700 mb-3">
+                        <div className="border-l-4 pl-6" style={{ borderColor: tertiary.color }}>
+                            <h3 className="text-lg font-bold mb-3" style={{ color: tertiary.color }}>
                                 Tertiair Archetype: {tertiary.name} ({tertiaryPercent}%)
                             </h3>
-                            <p className="text-gray-700 mb-2"><strong>Essentie:</strong> {tertiary.description}</p>
-                            <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {tertiary.traits}</p>
-                            <p className="text-gray-600"><strong>Voorbeelden:</strong> {tertiary.brands}</p>
+                            <p className="text-sm text-gray-500 italic mb-3">{tertiary.subtitle}</p>
+                            <p className="text-gray-700 mb-3 leading-relaxed">{tertiary.description}</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-3">
+                                <p className="text-gray-800 mb-2"><strong>Kernbelofte:</strong> "{tertiary.promise}"</p>
+                                <p className="text-gray-700 mb-2"><strong>Kernwaarden:</strong> {tertiary.traits}</p>
+                            </div>
+                            <p className="text-gray-700 mb-3 leading-relaxed"><strong>Communicatie:</strong> {tertiary.communication}</p>
+                            <p className="text-gray-600 text-sm"><strong>Voorbeeldmerken:</strong> {tertiary.brands}</p>
                         </div>
 
-                        <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500 mt-8">
-                            <h4 className="font-bold text-indigo-900 mb-3">Geïntegreerde Merkidentiteit</h4>
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg border-l-4 border-gray-400 mt-8">
+                            <h4 className="font-bold text-gray-900 mb-3 text-lg">Geïntegreerde Merkidentiteit</h4>
                             <p className="text-gray-700 leading-relaxed">
-                                Jouw merk combineert de kracht van <strong>{primary.name}</strong> als leidend archetype, 
-                                versterkt door elementen van <strong>{secondary.name}</strong> en <strong>{tertiary.name}</strong>. 
-                                Deze combinatie creëert een unieke merkpersoonlijkheid die {primary.description.toLowerCase()} 
+                                Jouw merk combineert de kracht van <strong style={{ color: primary.color }}>{primary.name}</strong> als leidend archetype ({primaryPercent}%), 
+                                versterkt door elementen van <strong style={{ color: secondary.color }}>{secondary.name}</strong> ({secondaryPercent}%) 
+                                en <strong style={{ color: tertiary.color }}>{tertiary.name}</strong> ({tertiaryPercent}%). 
+                                Deze combinatie creëert een unieke merkpersoonlijkheid die {primary.description.toLowerCase().split('.')[0]}, 
                                 terwijl het ook {secondary.description.toLowerCase().split('.')[0]}. 
                                 Dit maakt jullie merk onderscheidend en authentiek in jullie positionering.
                             </p>
@@ -692,16 +756,16 @@
                     <div className="min-h-screen py-12 px-4">
                         <div className="max-w-4xl mx-auto">
                             <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
-                                <h1 className="text-4xl font-bold text-center mb-2 text-indigo-900">
+                                <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
                                     Jouw Merkarchetype Profiel
                                 </h1>
                                 <p className="text-center text-gray-600 mb-8">
-                                    Gebaseerd op de Jung Merkarchetypen
+                                    Gebaseerd op de 12 Jungiaanse Merkarchetypen
                                 </p>
 
                                 <div className="mb-10">
-                                    <h2 className="text-2xl font-bold mb-4 text-indigo-900">Merkprofiel</h2>
-                                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
+                                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Merkprofiel</h2>
+                                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200">
                                         <p className="text-gray-800 leading-relaxed text-lg">
                                             {generateProfile()}
                                         </p>
@@ -709,35 +773,38 @@
                                 </div>
 
                                 <div className="mb-10">
-                                    <h2 className="text-2xl font-bold mb-6 text-indigo-900">Jouw Archetype Verdeling</h2>
+                                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Jouw Archetype Verdeling</h2>
                                     <div className="flex flex-col md:flex-row items-center gap-8">
                                         <div className="w-full md:w-1/2">
                                             <PieChart data={[
-                                                { name: archetypes[results.primary[0]].name, value: results.primary[1], color: '#6366f1' },
-                                                { name: archetypes[results.secondary[0]].name, value: results.secondary[1], color: '#8b5cf6' },
-                                                { name: archetypes[results.tertiary[0]].name, value: results.tertiary[1], color: '#a78bfa' }
+                                                { name: archetypes[results.primary[0]].name, value: results.primary[1], color: archetypes[results.primary[0]].color },
+                                                { name: archetypes[results.secondary[0]].name, value: results.secondary[1], color: archetypes[results.secondary[0]].color },
+                                                { name: archetypes[results.tertiary[0]].name, value: results.tertiary[1], color: archetypes[results.tertiary[0]].color }
                                             ]} />
                                         </div>
                                         <div className="w-full md:w-1/2 space-y-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-full bg-indigo-600"></div>
+                                                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: archetypes[results.primary[0]].color }}></div>
                                                 <div>
                                                     <span className="font-bold text-gray-900">{archetypes[results.primary[0]].name}</span>
                                                     <span className="text-gray-600 ml-2">{results.primary[1]}%</span>
+                                                    <div className="text-sm text-gray-500 italic">{archetypes[results.primary[0]].subtitle}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-full bg-purple-600"></div>
+                                                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: archetypes[results.secondary[0]].color }}></div>
                                                 <div>
                                                     <span className="font-bold text-gray-900">{archetypes[results.secondary[0]].name}</span>
                                                     <span className="text-gray-600 ml-2">{results.secondary[1]}%</span>
+                                                    <div className="text-sm text-gray-500 italic">{archetypes[results.secondary[0]].subtitle}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-full bg-purple-400"></div>
+                                                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: archetypes[results.tertiary[0]].color }}></div>
                                                 <div>
                                                     <span className="font-bold text-gray-900">{archetypes[results.tertiary[0]].name}</span>
                                                     <span className="text-gray-600 ml-2">{results.tertiary[1]}%</span>
+                                                    <div className="text-sm text-gray-500 italic">{archetypes[results.tertiary[0]].subtitle}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -745,7 +812,7 @@
                                 </div>
 
                                 <div className="mb-8">
-                                    <h2 className="text-2xl font-bold mb-6 text-indigo-900">Jouw Archetypen in Detail</h2>
+                                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Jouw Archetypen in Detail</h2>
                                     {getArchetypeExplanation()}
                                 </div>
 
@@ -757,7 +824,7 @@
                                             setAnswers({});
                                             setResults(null);
                                         }}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                                        className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
                                     >
                                         Nieuwe Assessment
                                     </button>
@@ -776,8 +843,8 @@
                 <div className="min-h-screen py-12 px-4">
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
-                            <h1 className="text-4xl font-bold text-center mb-2 text-indigo-900">
-                                Jung Merkarchetype Assessment
+                            <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
+                                Dizain Merkarchetype Test
                             </h1>
                             <p className="text-center text-gray-600 mb-8">
                                 Ontdek welk archetype het beste bij jouw merk past
@@ -790,14 +857,14 @@
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
-                                        className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                                        className="bg-gradient-to-r from-gray-600 to-gray-700 h-2 rounded-full transition-all duration-300"
                                         style={{ width: `${progress}%` }}
                                     ></div>
                                 </div>
                             </div>
 
                             <div className="mb-8">
-                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg mb-6">
+                                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg mb-6">
                                     <p className="text-sm text-gray-600 mb-4 text-center">
                                         Geef aan in hoeverre de linker of rechter stelling het beste bij jouw merk past
                                     </p>
@@ -808,8 +875,8 @@
                                                 onClick={() => handleAnswer(currentQ.id, value)}
                                                 className={`py-3 px-2 rounded-lg font-medium transition-all ${
                                                     answers[currentQ.id] === value
-                                                        ? 'bg-indigo-600 text-white shadow-lg scale-105'
-                                                        : 'bg-white hover:bg-indigo-100 text-gray-700'
+                                                        ? 'bg-gray-700 text-white shadow-lg scale-105'
+                                                        : 'bg-white hover:bg-gray-200 text-gray-700 border border-gray-300'
                                                 }`}
                                             >
                                                 {value}
@@ -840,7 +907,7 @@
                                     <button
                                         onClick={() => setCurrentQuestion(currentQuestion + 1)}
                                         disabled={!isAnswered}
-                                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                                     >
                                         Volgende
                                     </button>
@@ -848,7 +915,7 @@
                                     <button
                                         onClick={calculateResults}
                                         disabled={Object.keys(answers).length < questions.length}
-                                        className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+                                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-lg transition-colors"
                                     >
                                         Bekijk Resultaten
                                     </button>
@@ -856,7 +923,7 @@
                             </div>
 
                             {Object.keys(answers).length < questions.length && currentQuestion === questions.length - 1 && (
-                                <p className="text-center text-amber-600 mt-4 text-sm">
+                                <p className="text-center text-gray-600 mt-4 text-sm">
                                     Beantwoord alle vragen om je resultaten te zien
                                 </p>
                             )}
