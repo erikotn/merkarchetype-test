@@ -112,6 +112,47 @@ Geen redeploy nodig — direct actief.
 
 ---
 
+## Stap 8 — Content-tabs aanmaken (vragen + archetypen bewerkbaar via Sheet)
+
+Hiermee komen de vragen, archetype-omschrijvingen, scoring en eigen merkpersoonlijkheid-teksten in jouw Sheet te staan, zodat je ze daar makkelijk kunt aanpassen zonder code.
+
+In de Apps Script editor (na het pasten van de nieuwe Code.gs):
+
+1. Dropdown naast ▶ Run → kies **`eenmaligContentTabsAanmaken`**
+2. Klik **▶ Run**
+3. Bevestiging: er zijn vier nieuwe tabs in je Sheet:
+   - **Archetypes** — naam, emoji, kleur, beschrijving, kernbelofte, communicatie, kernwaarden, voorbeeldmerken (12 rijen)
+   - **Questions** — de 30 stellingen (left/right per vraag)
+   - **Mappings** — punten per (vraag, antwoord, archetype). Antwoord 3 (neutraal) staat er niet in — dat is altijd 0 punten
+   - **Combinations** — eigen merkpersoonlijkheid-tekst per top-2-combinatie (begint met 1 voorbeeld, vul aan over tijd)
+
+**Aanpassen:** open de Sheet, ga naar de juiste tab, wijzig wat je wilt, save (gebeurt automatisch). De tool leest deze tabs live.
+
+**Cache:** de tool cached de content 1 uur in de browser. Wil je je wijzigingen direct zien?
+- Open de tool → ⚙️ Beheer → wachtwoord invullen → klik **🔃 Cache wissen** → refresh de pagina
+
+**Nieuwe combination toevoegen:** open de Combinations-tab, voeg rij toe met:
+- `primary`: archetype-key (bv. `hero`, `lover`, `creator` — de Engelstalige interne namen, zie kolom `key` in Archetypes-tab)
+- `secondary`: tweede archetype-key
+- `description`: jouw geschreven merkpersoonlijkheid-tekst
+
+Wanneer iemand de test maakt en uitkomt op die combinatie, zien ze JOUW geschreven tekst i.p.v. niets.
+
+---
+
+## Stap 9 — Diagram uploaden (optioneel maar mooi)
+
+Het intro-scherm toont een afbeelding van het merkarchetype-wiel. Upload het bestand `archetype-wheel.png` naar de root van je GitHub-repo:
+
+1. Ga naar https://github.com/erikotn/merkarchetype-test
+2. Klik **Add file** → **Upload files**
+3. Sleep je PNG erin (zorg dat de bestandsnaam `archetype-wheel.png` is — hernoem 'm anders eerst lokaal)
+4. Commit changes
+
+Geen image? De tool verbergt 'm automatisch (geen kapotte placeholder).
+
+---
+
 ## Wijzigingen aan Code.gs later
 
 Als je het Apps Script later aanpast, moet je opnieuw deployen:
