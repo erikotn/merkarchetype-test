@@ -767,6 +767,29 @@
                         <p className="text-gray-800 leading-relaxed text-lg">{profileText}</p>
                     </div>
 
+                    <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
+                        <h2 className="text-xl font-bold mb-6">Archetype-verdeling</h2>
+                        <div className="flex flex-col md:flex-row items-center gap-8">
+                            <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
+                            <div className="w-full md:w-1/2 space-y-4">
+                                {[top.primary, top.secondary].map((entry, i) => {
+                                    const a = archetypes[entry[0]];
+                                    return (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className="text-3xl">{a.emoji}</div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between font-bold"><span>{a.name}</span><span style={{ color: a.color }}>{entry[1]}%</span></div>
+                                                <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                                    <div className="h-2 rounded-full" style={{ width: `${entry[1]}%`, backgroundColor: a.color }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
                     {uniqueCombo && (
                         <div className="bg-gray-900 text-white rounded-2xl p-6 sm:p-8 mb-10 slide-in">
                             <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -792,29 +815,6 @@
                             <div className="text-base leading-relaxed space-y-3 whitespace-pre-line">{uniqueCombo}</div>
                         </div>
                     )}
-
-                    <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
-                        <h2 className="text-xl font-bold mb-6">Archetype-verdeling</h2>
-                        <div className="flex flex-col md:flex-row items-center gap-8">
-                            <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
-                            <div className="w-full md:w-1/2 space-y-4">
-                                {[top.primary, top.secondary].map((entry, i) => {
-                                    const a = archetypes[entry[0]];
-                                    return (
-                                        <div key={i} className="flex items-center gap-3">
-                                            <div className="text-3xl">{a.emoji}</div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between font-bold"><span>{a.name}</span><span style={{ color: a.color }}>{entry[1]}%</span></div>
-                                                <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
-                                                    <div className="h-2 rounded-full" style={{ width: `${entry[1]}%`, backgroundColor: a.color }}></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
 
                     <h2 className="text-2xl font-bold mb-4">In detail</h2>
                     <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
