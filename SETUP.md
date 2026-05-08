@@ -86,12 +86,45 @@ Werkt? Klaar.
 
 ---
 
+## Stap 7 — Admin-toegang aanzetten (aanbevolen)
+
+Hiermee kun je vanaf elk apparaat al je klantsessies terugvinden, ook nadat je je browsercache hebt gewist of een ander apparaat gebruikt.
+
+1. In de Apps Script editor (waar je `Code.gs` hebt geplakt): klik **linksboven op het tandwiel-icoon** (Project Settings)
+2. Scroll naar beneden naar **Script Properties**
+3. Klik **Add script property**
+   - Property: `ADMIN_KEY`
+   - Value: een eigen wachtwoord, bijvoorbeeld `merken-2026!`
+4. Klik **Save script properties**
+
+Geen redeploy nodig — de wijziging is direct actief.
+
+**Hoe gebruik je het:**
+- Open https://erikotn.github.io/merkarchetype-test/
+- Onderaan klikken op **⚙️ Beheer**
+- Wachtwoord invullen → je ziet alle sessies met directe links naar de host-dashboards
+
+> ℹ️ Het wachtwoord blijft op jouw apparaat onthouden in localStorage tot je op "Uitloggen" klikt. Op een nieuw apparaat: typ 'm één keer.
+
+---
+
 ## Wijzigingen aan Code.gs later
 
 Als je het Apps Script later aanpast, moet je opnieuw deployen:
 - **Deploy** → **Manage deployments** → klik op het 🖉-icoon naast je bestaande deployment
 - Verander niets, klik op **Version: New version**, klik op **Deploy**
 - De URL blijft hetzelfde (mits je de bestaande deployment update i.p.v. een nieuwe maakt)
+
+---
+
+## Waar staat mijn data?
+
+Alles in jouw Google Sheet (in jouw Drive). Twee tabbladen:
+
+- **Sessions**: id, name, host_token, status, created_at — één rij per sessie
+- **Responses**: session_id, participant_name, answers (JSON-string), submitted_at — één rij per ingediend antwoord
+
+Je kunt direct in de Sheet bekijken wie wat heeft ingediend. De `host_token` is je toegangscode per sessie — bewaar die zorgvuldig (of gebruik de admin-flow om hem altijd terug te vinden).
 
 ---
 
