@@ -722,13 +722,18 @@
             const scores = useMemo(() => calcScores(answers), [answers]);
             const top = useMemo(() => topThree(scores), [scores]);
             const profileText = useMemo(() => buildProfileText(answers), [answers]);
-            const uniqueCombo = useMemo(() => {
+            const uniqueComboObj = useMemo(() => {
                 const p = top.primary[0], s = top.secondary[0];
-                // Bidirectionele lookup: probeer beide richtingen
-                if (combinations[p] && combinations[p][s]) return combinations[p][s];
-                if (combinations[s] && combinations[s][p]) return combinations[s][p];
-                return null;
+                // Directionele lookup: combinaties zijn asymmetrisch.
+                // primary X + secondary Y is een andere tekst dan primary Y + secondary X.
+                const entry = combinations[p] && combinations[p][s];
+                if (!entry) return null;
+                // Backward-compat: oude format was string, nieuw format is { description, type }.
+                if (typeof entry === 'string') return { description: entry, type: '' };
+                return entry;
             }, [top]);
+            const uniqueCombo = uniqueComboObj?.description || null;
+            const uniqueComboType = uniqueComboObj?.type || '';
 
             const pieData = [
                 { name: archetypes[top.primary[0]].name, value: top.primary[1], color: archetypes[top.primary[0]].color },
@@ -764,15 +769,27 @@
 
                     {uniqueCombo && (
                         <div className="bg-gray-900 text-white rounded-2xl p-6 sm:p-8 mb-10 slide-in">
-                            <p className="text-xs uppercase tracking-widest text-pink-300 mb-2 font-semibold">
-                                Unieke merkpersoonlijkheid
-                            </p>
+                            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                                <p className="text-xs uppercase tracking-widest text-pink-300 font-semibold">
+                                    Unieke merkpersoonlijkheid
+                                </p>
+                                {uniqueComboType && (
+                                    <span className={`text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-full ${
+                                        uniqueComboType.includes('natuurlijk') ? 'bg-green-500/20 text-green-300' :
+                                        uniqueComboType.includes('productief') ? 'bg-amber-500/20 text-amber-300' :
+                                        uniqueComboType.includes('niet eenvoudig') ? 'bg-red-500/20 text-red-300' :
+                                        'bg-pink-500/20 text-pink-300'
+                                    }`}>
+                                        {uniqueComboType}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-base text-pink-200 mb-4 italic">
-                                {archetypes[top.primary[0]].emoji} {archetypes[top.primary[0]].name}
-                                {' × '}
-                                {archetypes[top.secondary[0]].emoji} {archetypes[top.secondary[0]].name}
+                                {archetypes[top.primary[0]].emoji} {archetypes[top.primary[0]].name} (primair)
+                                {' + '}
+                                {archetypes[top.secondary[0]].emoji} {archetypes[top.secondary[0]].name} (secundair)
                             </p>
-                            <p className="text-lg leading-relaxed">{uniqueCombo}</p>
+                            <div className="text-base leading-relaxed space-y-3 whitespace-pre-line">{uniqueCombo}</div>
                         </div>
                     )}
 
