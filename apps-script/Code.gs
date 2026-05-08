@@ -212,6 +212,34 @@ function getAdminKey() {
   return PropertiesService.getScriptProperties().getProperty('ADMIN_KEY') || '';
 }
 
+/**
+ * Run deze functie eenmalig om je admin-wachtwoord in te stellen.
+ *
+ * In de Apps Script editor: kies 'eenmaligWachtwoordZetten' uit de
+ * dropdown naast het ▶ Run-knopje, klik Run. Er verschijnt een dialoog
+ * in je Sheet waarin je het wachtwoord kunt typen. Werkt direct, geen
+ * redeploy nodig.
+ *
+ * Wachtwoord wijzigen? Run 'm gewoon opnieuw — de nieuwe waarde
+ * overschrijft de oude. Of wis 'm via Project Settings → Script Properties.
+ */
+function eenmaligWachtwoordZetten() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.prompt(
+    'Admin-wachtwoord instellen',
+    'Type het wachtwoord dat je in de tool wilt gebruiken:',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const pwd = response.getResponseText().trim();
+  if (!pwd) {
+    ui.alert('Geen wachtwoord ingevoerd. Niets opgeslagen.');
+    return;
+  }
+  PropertiesService.getScriptProperties().setProperty('ADMIN_KEY', pwd);
+  ui.alert('Wachtwoord opgeslagen', 'Je kunt nu inloggen via "Beheer" in de tool.', ui.ButtonSet.OK);
+}
+
 function listSessions(params) {
   const adminKey = getAdminKey();
   if (!adminKey) return { error: 'Admin-toegang niet geconfigureerd. Stel ADMIN_KEY in via Script Properties.' };
