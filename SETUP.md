@@ -138,6 +138,10 @@ In de Apps Script editor (na het pasten van de nieuwe Code.gs):
 
 Wanneer iemand de test maakt en uitkomt op die combinatie, zien ze JOUW geschreven tekst i.p.v. niets.
 
+> 💡 De tool zoekt bidirectioneel: als je `hero + sage` schrijft, werkt 'ie ook voor mensen die uitkomen op `sage + hero`. Je hoeft elk paar maar één keer te schrijven.
+
+**30 starter-combinaties krijgen?** Run `voegCombinatiesToe` (zelfde dropdown-route als `eenmaligContentTabsAanmaken`). Voegt 30 voorgeschreven combinatie-teksten toe aan de Combinations-tab. Bestaande rijen blijven ongemoeid. Pas de teksten daarna aan in de Sheet zoals je wilt.
+
 ---
 
 ## Stap 9 — Diagram uploaden (optioneel maar mooi)

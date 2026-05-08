@@ -724,7 +724,10 @@
             const profileText = useMemo(() => buildProfileText(answers), [answers]);
             const uniqueCombo = useMemo(() => {
                 const p = top.primary[0], s = top.secondary[0];
-                return combinations[p] && combinations[p][s] ? combinations[p][s] : null;
+                // Bidirectionele lookup: probeer beide richtingen
+                if (combinations[p] && combinations[p][s]) return combinations[p][s];
+                if (combinations[s] && combinations[s][p]) return combinations[s][p];
+                return null;
             }, [top]);
 
             const pieData = [
