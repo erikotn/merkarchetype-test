@@ -373,35 +373,39 @@ function getConfig() {
 function eenmaligContentTabsAanmaken() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  const existing = [ARCHETYPES_TAB, QUESTIONS_TAB, MAPPINGS_TAB, COMBINATIONS_TAB]
-    .filter(t => ss.getSheetByName(t));
-  if (existing.length > 0) {
-    ui.alert(
-      'Tabs bestaan al',
-      'Deze tabs bestaan al: ' + existing.join(', ') +
-      '\n\nVerwijder of hernoem ze eerst als je opnieuw wilt initialiseren.',
-      ui.ButtonSet.OK
-    );
-    return;
-  }
-
   const seed = SEED_DATA();
-  populateSheet(ss, ARCHETYPES_TAB, seed.archetypes);
-  populateSheet(ss, QUESTIONS_TAB, seed.questions);
-  populateSheet(ss, MAPPINGS_TAB, seed.mappings);
-  populateSheet(ss, COMBINATIONS_TAB, seed.combinations);
 
-  ui.alert(
-    'Klaar',
-    'Vier tabs zijn aangemaakt en gevuld:\n\n' +
-    '• Archetypes — namen, kleuren en beschrijvingen\n' +
-    '• Questions — de 30 stellingen\n' +
-    '• Mappings — punten per (vraag, antwoord, archetype)\n' +
-    '• Combinations — eigen merkpersoonlijkheid-tekst per top-2-combinatie (begint met 1 voorbeeld)\n\n' +
-    'Bewerk gerust — de tool leest deze tabs live.',
-    ui.ButtonSet.OK
-  );
+  const targets = [
+    { name: ARCHETYPES_TAB,    data: seed.archetypes,   label: 'Archetypes — namen, kleuren en beschrijvingen' },
+    { name: QUESTIONS_TAB,     data: seed.questions,    label: 'Questions — de 30 stellingen' },
+    { name: MAPPINGS_TAB,      data: seed.mappings,     label: 'Mappings — punten per (vraag, antwoord, archetype)' },
+    { name: COMBINATIONS_TAB,  data: seed.combinations, label: 'Combinations — merkpersoonlijkheid per top-2 (132 directionele teksten)' }
+  ];
+
+  const created = [];
+  const skipped = [];
+  targets.forEach(t => {
+    if (ss.getSheetByName(t.name)) {
+      skipped.push(t.name);
+    } else {
+      populateSheet(ss, t.name, t.data);
+      created.push(t.label);
+    }
+  });
+
+  let msg = '';
+  if (created.length > 0) {
+    msg += created.length + ' tab' + (created.length === 1 ? '' : 's') + ' aangemaakt:\n\n• ' + created.join('\n• ') + '\n\n';
+  }
+  if (skipped.length > 0) {
+    msg += 'Bestaande tabs onveranderd gelaten: ' + skipped.join(', ') + '.\n\n';
+  }
+  if (created.length === 0) {
+    msg = 'Alle vier tabs bestonden al — niets aangemaakt. Wil je een tab opnieuw vullen, hernoem of verwijder \'m eerst.';
+  } else {
+    msg += 'Bewerk gerust — de tool leest de tabs live.';
+  }
+  ui.alert('Klaar', msg, ui.ButtonSet.OK);
 }
 
 function populateSheet(ss, tabName, rows) {
