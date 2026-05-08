@@ -86,23 +86,27 @@ Werkt? Klaar.
 
 ---
 
-## Stap 7 — Admin-toegang aanzetten (aanbevolen)
+## Stap 7 — Admin-wachtwoord instellen
 
 Hiermee kun je vanaf elk apparaat al je klantsessies terugvinden, ook nadat je je browsercache hebt gewist of een ander apparaat gebruikt.
 
-1. In de Apps Script editor (waar je `Code.gs` hebt geplakt): klik **linksboven op het tandwiel-icoon** (Project Settings)
-2. Scroll naar beneden naar **Script Properties**
-3. Klik **Add script property**
-   - Property: `ADMIN_KEY`
-   - Value: een eigen wachtwoord, bijvoorbeeld `merken-2026!`
-4. Klik **Save script properties**
+In de Apps Script editor (waar je `Code.gs` net hebt geplakt):
 
-Geen redeploy nodig — de wijziging is direct actief.
+1. **Bovenaan** zit een dropdown naast het ▶ Run-knopje. Klik erop en kies **`eenmaligWachtwoordZetten`**
+2. Klik op **▶ Run**
+3. Eerste keer: Google vraagt om toestemming → Allow
+4. Een dialoog verschijnt in jouw Google Sheet (kan in een ander browsertabblad zitten — tab wisselen)
+5. Type je wachtwoord, klik OK
+6. Bevestiging: "Wachtwoord opgeslagen"
 
-**Hoe gebruik je het:**
+Geen redeploy nodig — direct actief.
+
+> 💡 Wachtwoord later wijzigen? Run gewoon `eenmaligWachtwoordZetten` opnieuw. De oude wordt overschreven.
+
+**Hoe gebruik je het in de tool:**
 - Open https://erikotn.github.io/merkarchetype-test/
 - Onderaan klikken op **⚙️ Beheer**
-- Wachtwoord invullen → je ziet alle sessies met directe links naar de host-dashboards
+- Wachtwoord invullen → je ziet alle sessies met directe links
 
 > ℹ️ Het wachtwoord blijft op jouw apparaat onthouden in localStorage tot je op "Uitloggen" klikt. Op een nieuw apparaat: typ 'm één keer.
 
