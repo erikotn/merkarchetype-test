@@ -140,7 +140,15 @@ Wanneer iemand de test maakt en uitkomt op die combinatie, zien ze JOUW geschrev
 
 > 💡 De tool zoekt bidirectioneel: als je `hero + sage` schrijft, werkt 'ie ook voor mensen die uitkomen op `sage + hero`. Je hoeft elk paar maar één keer te schrijven.
 
-**30 starter-combinaties krijgen?** Run `voegCombinatiesToe` (zelfde dropdown-route als `eenmaligContentTabsAanmaken`). Voegt 30 voorgeschreven combinatie-teksten toe aan de Combinations-tab. Bestaande rijen blijven ongemoeid. Pas de teksten daarna aan in de Sheet zoals je wilt.
+**Alle 132 voorgeschreven combinaties laden?** Run `vervangAlleCombinaties` (zelfde dropdown-route als `eenmaligContentTabsAanmaken`). Vervangt de hele Combinations-tab met 132 directionele teksten (12 archetypen × 11 partners — A primair + B secundair is een andere tekst dan B primair + A secundair). Bestaande aanpassingen gaan verloren — vandaar dat de functie eerst om bevestiging vraagt.
+
+De 4 kolommen na het runnen:
+- `primary` — primaire archetype-key
+- `secondary` — secundaire archetype-key
+- `type` — natuurlijke aanvulling / productieve spanning / niet eenvoudig
+- `description` — de strategische tekst (de UI toont 'm)
+
+> 💡 De type-kolom verschijnt in de tool als een gekleurde badge: groen voor natuurlijke aanvulling, oranje voor productieve spanning, rood voor niet eenvoudig.
 
 ---
 
