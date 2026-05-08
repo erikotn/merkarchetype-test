@@ -317,16 +317,16 @@
             return scores;
         }
 
-        function topThree(scores) {
+        function topTwo(scores) {
             const sorted = Object.entries(scores).sort(([,a],[,b]) => b-a);
-            const top3 = sorted.slice(0, 3);
-            const total = top3.reduce((s,[,v]) => s+v, 0);
+            const top2 = sorted.slice(0, 2);
+            const total = top2.reduce((s,[,v]) => s+v, 0);
             const pct = total === 0
-                ? top3.map(([k]) => [k, 33])
-                : top3.map(([k,v]) => [k, Math.round((v/total) * 100)]);
+                ? top2.map(([k]) => [k, 50])
+                : top2.map(([k,v]) => [k, Math.round((v/total) * 100)]);
             const sum = pct.reduce((s,[,p]) => s+p, 0);
             if (sum !== 100 && pct[0]) pct[0][1] += (100 - sum);
-            return { primary: pct[0], secondary: pct[1], tertiary: pct[2] };
+            return { primary: pct[0], secondary: pct[1] };
         }
 
         function aggregateTeam(participants) {
@@ -657,7 +657,7 @@
 
         function ArchetypeCard({ rank, archetypeKey, percent, isPrimary }) {
             const a = archetypes[archetypeKey];
-            const labels = { 1: "Primair", 2: "Secundair", 3: "Tertiair" };
+            const labels = { 1: "Primair", 2: "Secundair" };
             return (
                 <div className="bg-white rounded-2xl border-2 p-6 sm:p-8 mb-6 slide-in" style={{ borderColor: a.color }}>
                     <div className="flex items-start gap-4 mb-4">
@@ -720,7 +720,7 @@
 
         function ResultIndividual({ name, answers, sessionName, submissionStatus, onReset, onNewParticipant, onViewTeam, onShare, mode }) {
             const scores = useMemo(() => calcScores(answers), [answers]);
-            const top = useMemo(() => topThree(scores), [scores]);
+            const top = useMemo(() => topTwo(scores), [scores]);
             const profileText = useMemo(() => buildProfileText(answers), [answers]);
             const uniqueComboObj = useMemo(() => {
                 const p = top.primary[0], s = top.secondary[0];
@@ -737,8 +737,7 @@
 
             const pieData = [
                 { name: archetypes[top.primary[0]].name, value: top.primary[1], color: archetypes[top.primary[0]].color },
-                { name: archetypes[top.secondary[0]].name, value: top.secondary[1], color: archetypes[top.secondary[0]].color },
-                { name: archetypes[top.tertiary[0]].name, value: top.tertiary[1], color: archetypes[top.tertiary[0]].color }
+                { name: archetypes[top.secondary[0]].name, value: top.secondary[1], color: archetypes[top.secondary[0]].color }
             ];
 
             return (
@@ -798,7 +797,7 @@
                         <div className="flex flex-col md:flex-row items-center gap-8">
                             <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
                             <div className="w-full md:w-1/2 space-y-4">
-                                {[top.primary, top.secondary, top.tertiary].map((entry, i) => {
+                                {[top.primary, top.secondary].map((entry, i) => {
                                     const a = archetypes[entry[0]];
                                     return (
                                         <div key={i} className="flex items-center gap-3">
@@ -819,7 +818,6 @@
                     <h2 className="text-2xl font-bold mb-4">In detail</h2>
                     <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
                     <ArchetypeCard rank={2} archetypeKey={top.secondary[0]} percent={top.secondary[1]} />
-                    <ArchetypeCard rank={3} archetypeKey={top.tertiary[0]} percent={top.tertiary[1]} />
 
                     <div className="mt-10 flex flex-wrap gap-3 justify-center no-print">
                         <button onClick={() => window.print()} className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition">📄 Download als PDF</button>
@@ -838,16 +836,18 @@
 
         function ResultTeam({ sessionName, participants, onAddParticipant, onReset, isOnline, status, onClose, onRefresh, refreshing }) {
             const teamScores = useMemo(() => aggregateTeam(participants), [participants]);
-            const top = useMemo(() => topThree(teamScores), [teamScores]);
+            const top = useMemo(() => topTwo(teamScores), [teamScores]);
 
             const pieData = [
                 { name: archetypes[top.primary[0]].name, value: top.primary[1], color: archetypes[top.primary[0]].color },
-                { name: archetypes[top.secondary[0]].name, value: top.secondary[1], color: archetypes[top.secondary[0]].color },
-                { name: archetypes[top.tertiary[0]].name, value: top.tertiary[1], color: archetypes[top.tertiary[0]].color }
+                { name: archetypes[top.secondary[0]].name, value: top.secondary[1], color: archetypes[top.secondary[0]].color }
             ];
+            const teamComboObj = (combinations[top.primary[0]] && combinations[top.primary[0]][top.secondary[0]]) || null;
+            const teamCombo = (typeof teamComboObj === 'string') ? teamComboObj : (teamComboObj?.description || null);
+            const teamComboType = (typeof teamComboObj === 'object' && teamComboObj?.type) || '';
             const perParticipant = participants.map(p => {
                 const s = calcScores(p.answers);
-                return { name: p.name, top: topThree(s) };
+                return { name: p.name, top: topTwo(s) };
             });
 
             return (
@@ -872,7 +872,7 @@
                             <div className="flex flex-col md:flex-row items-center gap-8">
                                 <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
                                 <div className="w-full md:w-1/2 space-y-4">
-                                    {[top.primary, top.secondary, top.tertiary].map((entry, i) => {
+                                    {[top.primary, top.secondary].map((entry, i) => {
                                         const a = archetypes[entry[0]];
                                         return (
                                             <div key={i} className="flex items-center gap-3">
@@ -891,6 +891,32 @@
                             </div>
                         </div>
 
+                        {teamCombo && (
+                            <div className="bg-gray-900 text-white rounded-2xl p-6 sm:p-8 mb-10 slide-in">
+                                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                                    <p className="text-xs uppercase tracking-widest text-pink-300 font-semibold">
+                                        Unieke merkpersoonlijkheid
+                                    </p>
+                                    {teamComboType && (
+                                        <span className={`text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-full ${
+                                            teamComboType.includes('natuurlijk') ? 'bg-green-500/20 text-green-300' :
+                                            teamComboType.includes('productief') ? 'bg-amber-500/20 text-amber-300' :
+                                            teamComboType.includes('niet eenvoudig') ? 'bg-red-500/20 text-red-300' :
+                                            'bg-pink-500/20 text-pink-300'
+                                        }`}>
+                                            {teamComboType}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-base text-pink-200 mb-4 italic">
+                                    {archetypes[top.primary[0]].emoji} {archetypes[top.primary[0]].name} (primair)
+                                    {' + '}
+                                    {archetypes[top.secondary[0]].emoji} {archetypes[top.secondary[0]].name} (secundair)
+                                </p>
+                                <div className="text-base leading-relaxed space-y-3 whitespace-pre-line">{teamCombo}</div>
+                            </div>
+                        )}
+
                         <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
                             <h2 className="text-xl font-bold mb-4">Stemming per deelnemer</h2>
                             <div className="space-y-3">
@@ -903,7 +929,7 @@
                                                 <p className="font-semibold truncate">{p.name}</p>
                                                 <p className="text-sm text-gray-600">
                                                     Top: <strong style={{ color: a.color }}>{a.name}</strong> ({p.top.primary[1]}%)
-                                                    <span className="text-gray-400"> · {archetypes[p.top.secondary[0]].name} ({p.top.secondary[1]}%) · {archetypes[p.top.tertiary[0]].name} ({p.top.tertiary[1]}%)</span>
+                                                    <span className="text-gray-400"> · {archetypes[p.top.secondary[0]].name} ({p.top.secondary[1]}%)</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -915,7 +941,6 @@
                         <h2 className="text-2xl font-bold mb-4">Team-archetype in detail</h2>
                         <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
                         <ArchetypeCard rank={2} archetypeKey={top.secondary[0]} percent={top.secondary[1]} />
-                        <ArchetypeCard rank={3} archetypeKey={top.tertiary[0]} percent={top.tertiary[1]} />
                     </>)}
 
                     <div className="mt-10 flex flex-wrap gap-3 justify-center no-print">
