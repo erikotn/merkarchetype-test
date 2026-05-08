@@ -272,15 +272,19 @@
         }
 
         // ─── API CALLS naar Apps Script ─────────────────────────────────
+        // GET met query params i.p.v. POST: Apps Script redirect strip de body
+        // bij POST (302 → fetch volgt en verliest body). GET werkt wel.
         async function api(action, data = {}) {
             if (!API_AVAILABLE) {
                 throw new Error('Online team-modus is nog niet geconfigureerd. Zie SETUP.md.');
             }
-            const res = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                // Geen Content-Type → fetch gebruikt 'text/plain' → geen CORS preflight
-                body: JSON.stringify({ action, ...data })
+            const params = new URLSearchParams({ action });
+            Object.entries(data).forEach(([k, v]) => {
+                if (v !== undefined && v !== null) params.append(k, String(v));
+            });
+            const res = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, {
+                method: 'GET',
+                redirect: 'follow'
             });
             if (!res.ok) throw new Error('Netwerkfout: ' + res.status);
             const json = await res.json();
