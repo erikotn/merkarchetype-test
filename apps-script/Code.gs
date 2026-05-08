@@ -433,6 +433,85 @@ function populateSheet(ss, tabName, rows) {
  * Run één keer. Erna kun je in de Sheet zelf bewerken/uitbreiden.
  */
 /**
+ * Herstelt sessies die per ongeluk uit de Sessions-tab zijn gewist
+ * terwijl de bijbehorende Responses-rijen er nog wél staan.
+ *
+ * Werking:
+ * - Loop door Responses, verzamel unieke session_id's
+ * - Voor elke session_id die NIET in Sessions-tab staat: voeg een rij toe
+ *   met de oorspronkelijke session_id, een verse host_token, status 'closed'
+ *   (want we kunnen niet weten of de sessie open was), en een naam afgeleid
+ *   van de eerste deelnemer.
+ *
+ * Run vanuit Apps Script editor. Geeft een dialoog met overzicht van
+ * herstelde sessies; daarna zie je ze in 'Beheer' in de tool.
+ */
+function herstelSessiesUitResponses() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sessionsSheet = getSheet(SESSIONS_TAB);
+  const responsesSheet = getSheet(RESPONSES_TAB);
+
+  // Bestaande session_id's
+  const sessionsData = sessionsSheet.getDataRange().getValues();
+  const existingIds = new Set();
+  for (let i = 1; i < sessionsData.length; i++) {
+    const id = String(sessionsData[i][0] || '').trim();
+    if (id) existingIds.add(id);
+  }
+
+  // Verzamel session_id → eerste deelnemer + count
+  const responsesData = responsesSheet.getDataRange().getValues();
+  const orphans = {}; // {sid: { firstName, count }}
+  for (let i = 1; i < responsesData.length; i++) {
+    const sid = String(responsesData[i][0] || '').trim();
+    const name = String(responsesData[i][1] || '').trim();
+    if (!sid) continue;
+    if (existingIds.has(sid)) continue; // al een sessie
+    if (!orphans[sid]) {
+      orphans[sid] = { firstName: name, count: 1 };
+    } else {
+      orphans[sid].count++;
+    }
+  }
+
+  const sids = Object.keys(orphans);
+  if (sids.length === 0) {
+    ui.alert(
+      'Niets te herstellen',
+      'Alle responses hebben al een bijbehorende sessie in de Sessions-tab. Geen actie nodig.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+  try {
+    const newRows = sids.map(sid => {
+      const o = orphans[sid];
+      const name = o.firstName
+        ? 'Hersteld – ' + o.firstName + (o.count > 1 ? ' + ' + (o.count - 1) + ' anderen' : '')
+        : 'Hersteld – ' + o.count + ' deelnemer(s)';
+      return [sid, name, generateToken(), 'closed', new Date().toISOString()];
+    });
+    const startRow = sessionsSheet.getLastRow() + 1;
+    sessionsSheet.getRange(startRow, 1, newRows.length, 5).setValues(newRows);
+  } finally {
+    lock.releaseLock();
+  }
+
+  ui.alert(
+    'Klaar',
+    sids.length + ' sessie(s) hersteld in de Sessions-tab.\n\n' +
+    'Open in de tool: ⚙️ Beheer → wachtwoord → klik op "Open dashboard" om het team-resultaat te zien.\n\n' +
+    'Status is op "closed" gezet (we wisten niet of de oorspronkelijke sessie open of gesloten was). ' +
+    'Wil je \'m weer openen voor nieuwe deelnemers? Pas de status-kolom in de Sessions-tab aan naar "open".',
+    ui.ButtonSet.OK
+  );
+}
+
+/**
  * Vervangt de hele Combinations-tab met de 132 directionele combinaties.
  *
  * - Combinations-tab bestaat nog niet → wordt aangemaakt en gevuld.
