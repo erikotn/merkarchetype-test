@@ -25,7 +25,6 @@
         .accent-border { border-color: var(--accent); }
         .accent-soft-bg { background: var(--accent-soft); }
 
-        /* Subtiele textuur */
         body::before {
             content: '';
             position: fixed; inset: 0;
@@ -36,7 +35,6 @@
         }
         main { position: relative; z-index: 1; }
 
-        /* Animaties */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
@@ -56,7 +54,6 @@
         }
         .pop { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        /* Scale-knoppen */
         .scale-btn {
             transition: all 0.2s ease;
             border: 2px solid var(--line);
@@ -71,13 +68,11 @@
             transform: scale(1.05);
         }
 
-        /* Print */
         @media print {
             body::before { display: none; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; }
-            .print-page-break { page-break-before: always; }
         }
         .print-only { display: none; }
     </style>
@@ -90,7 +85,12 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback } = React;
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+        // ─── CONFIG ──────────────────────────────────────────────────────
+        // Plak hier je Google Apps Script Web App URL — zie SETUP.md
+        // Laat leeg om alleen Solo + Team-lokaal modus aan te bieden.
+        const APPS_SCRIPT_URL = '';
 
         // ─── ARCHETYPEN ──────────────────────────────────────────────────
         const archetypes = {
@@ -216,7 +216,9 @@
 
         // ─── HULPMETHODEN ────────────────────────────────────────────────
         const ARCHETYPE_KEYS = Object.keys(archetypes);
-        const STORAGE_KEY = 'merkarchetype:state:v2';
+        const STORAGE_KEY = 'merkarchetype:state:v3';
+        const HOST_SESSIONS_KEY = 'merkarchetype:hosted-sessions:v1';
+        const API_AVAILABLE = APPS_SCRIPT_URL && APPS_SCRIPT_URL.length > 0;
 
         function emptyScores() {
             const s = {};
@@ -256,7 +258,6 @@
             return sum;
         }
 
-        // Antwoorden compact in URL: 30 cijfers 0-5 (0 = niet beantwoord)
         function encodeAnswers(answers) {
             return questions.map(q => answers[q.id] || 0).join('');
         }
@@ -268,6 +269,37 @@
                 if (v >= 1 && v <= 5) out[questions[i].id] = v;
             }
             return out;
+        }
+
+        // ─── API CALLS naar Apps Script ─────────────────────────────────
+        async function api(action, data = {}) {
+            if (!API_AVAILABLE) {
+                throw new Error('Online team-modus is nog niet geconfigureerd. Zie SETUP.md.');
+            }
+            const res = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                // Geen Content-Type → fetch gebruikt 'text/plain' → geen CORS preflight
+                body: JSON.stringify({ action, ...data })
+            });
+            if (!res.ok) throw new Error('Netwerkfout: ' + res.status);
+            const json = await res.json();
+            if (json.error) throw new Error(json.error);
+            return json;
+        }
+
+        // Bewaar gehoste sessies in localStorage zodat de host na refresh terug kan
+        function rememberHostedSession(sessionId, hostToken, name) {
+            try {
+                const list = JSON.parse(localStorage.getItem(HOST_SESSIONS_KEY) || '[]');
+                const without = list.filter(s => s.sessionId !== sessionId);
+                without.unshift({ sessionId, hostToken, name, createdAt: Date.now() });
+                localStorage.setItem(HOST_SESSIONS_KEY, JSON.stringify(without.slice(0, 10)));
+            } catch (e) {}
+        }
+        function getHostedSessions() {
+            try { return JSON.parse(localStorage.getItem(HOST_SESSIONS_KEY) || '[]'); }
+            catch (e) { return []; }
         }
 
         // ─── PIE CHART ───────────────────────────────────────────────────
@@ -293,11 +325,10 @@
             );
         }
 
-        // ─── SCREENS ─────────────────────────────────────────────────────
-
-        function IntroScreen({ onSolo, onTeam, hasSavedSolo, hasSavedTeam, onResumeSolo, onResumeTeam }) {
+        // ─── INTRO ───────────────────────────────────────────────────────
+        function IntroScreen({ onSolo, onTeamLocal, onSessionCreate, onResume, savedSession, hostedSessions }) {
             return (
-                <div className="max-w-2xl mx-auto px-6 py-16 fade-up">
+                <div className="max-w-3xl mx-auto px-6 py-16 fade-up">
                     <div className="text-center mb-12">
                         <p className="text-sm tracking-widest uppercase text-gray-500 mb-3">Dizain</p>
                         <h1 className="text-5xl md:text-6xl font-black mb-4 leading-tight">
@@ -309,27 +340,57 @@
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4 mb-6">
-                        <button onClick={onSolo} className="group bg-white border-2 border-gray-200 hover:border-pink-500 rounded-2xl p-8 text-left transition-all hover:shadow-xl hover:-translate-y-1">
+                    <div className="grid md:grid-cols-3 gap-4 mb-6">
+                        <button onClick={onSolo} className="group bg-white border-2 border-gray-200 hover:border-pink-500 rounded-2xl p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1">
                             <div className="text-4xl mb-3">👤</div>
-                            <h3 className="text-2xl font-bold mb-2">Solo</h3>
-                            <p className="text-gray-600 text-sm leading-relaxed">Vul de test individueel in. Krijg direct je archetype-profiel.</p>
-                            <p className="text-pink-600 font-semibold mt-4 group-hover:translate-x-1 transition-transform inline-block">Start solo →</p>
+                            <h3 className="text-xl font-bold mb-1">Solo</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">Vul individueel in. Direct je eigen profiel.</p>
+                            <p className="text-pink-600 font-semibold mt-3 group-hover:translate-x-1 transition-transform inline-block text-sm">Start →</p>
                         </button>
-                        <button onClick={onTeam} className="group bg-white border-2 border-gray-200 hover:border-pink-500 rounded-2xl p-8 text-left transition-all hover:shadow-xl hover:-translate-y-1">
+                        <button onClick={onTeamLocal} className="group bg-white border-2 border-gray-200 hover:border-pink-500 rounded-2xl p-6 text-left transition-all hover:shadow-xl hover:-translate-y-1">
                             <div className="text-4xl mb-3">👥</div>
-                            <h3 className="text-2xl font-bold mb-2">Team</h3>
-                            <p className="text-gray-600 text-sm leading-relaxed">Meerdere mensen vullen in. Tool berekent het gemiddelde teamprofiel.</p>
-                            <p className="text-pink-600 font-semibold mt-4 group-hover:translate-x-1 transition-transform inline-block">Start team →</p>
+                            <h3 className="text-xl font-bold mb-1">Team — lokaal</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">Iedereen om de tafel, één apparaat. Na elkaar invullen.</p>
+                            <p className="text-pink-600 font-semibold mt-3 group-hover:translate-x-1 transition-transform inline-block text-sm">Start →</p>
+                        </button>
+                        <button
+                            onClick={onSessionCreate}
+                            className={`group relative bg-white border-2 rounded-2xl p-6 text-left transition-all ${API_AVAILABLE ? 'border-gray-200 hover:border-pink-500 hover:shadow-xl hover:-translate-y-1' : 'border-gray-200 opacity-70'}`}
+                        >
+                            <div className="text-4xl mb-3">🌐</div>
+                            <h3 className="text-xl font-bold mb-1">Team — online</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">Iedereen op eigen apparaat, tegelijk. Antwoorden in eigen Google Sheet.</p>
+                            {API_AVAILABLE
+                                ? <p className="text-pink-600 font-semibold mt-3 group-hover:translate-x-1 transition-transform inline-block text-sm">Start →</p>
+                                : <p className="text-amber-600 mt-3 text-xs font-medium">⚙️ Setup vereist — zie SETUP.md</p>
+                            }
                         </button>
                     </div>
 
-                    {(hasSavedSolo || hasSavedTeam) && (
+                    {savedSession && (
                         <div className="bg-pink-50 border border-pink-100 rounded-xl p-5 mt-6 text-center">
-                            <p className="text-sm text-gray-700 mb-3">Je hebt nog een onafgemaakte sessie:</p>
-                            <div className="flex gap-3 justify-center flex-wrap">
-                                {hasSavedSolo && <button onClick={onResumeSolo} className="bg-white border-2 accent-border accent-text font-semibold py-2 px-4 rounded-lg hover:bg-pink-100 transition">Solo hervatten</button>}
-                                {hasSavedTeam && <button onClick={onResumeTeam} className="bg-white border-2 accent-border accent-text font-semibold py-2 px-4 rounded-lg hover:bg-pink-100 transition">Team hervatten</button>}
+                            <p className="text-sm text-gray-700 mb-3">Je hebt een onafgemaakte sessie:</p>
+                            <button onClick={onResume} className="bg-white border-2 accent-border accent-text font-semibold py-2 px-4 rounded-lg hover:bg-pink-100 transition">Hervatten</button>
+                        </div>
+                    )}
+
+                    {hostedSessions.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-xl p-5 mt-6">
+                            <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-3">Door jou gehoste sessies</p>
+                            <div className="space-y-2">
+                                {hostedSessions.slice(0, 5).map(s => (
+                                    <a
+                                        key={s.sessionId}
+                                        href={`?session=${s.sessionId}&host=${s.hostToken}`}
+                                        className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition group"
+                                    >
+                                        <div>
+                                            <p className="font-semibold">{s.name}</p>
+                                            <p className="text-xs text-gray-500">{new Date(s.createdAt).toLocaleString('nl-NL')}</p>
+                                        </div>
+                                        <span className="text-pink-600 group-hover:translate-x-1 transition-transform">Open →</span>
+                                    </a>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -341,7 +402,7 @@
             );
         }
 
-        function NameInput({ title, subtitle, placeholder, buttonLabel, onSubmit, onCancel }) {
+        function NameInput({ title, subtitle, placeholder, buttonLabel, busy, onSubmit, onCancel }) {
             const [name, setName] = useState('');
             return (
                 <div className="max-w-xl mx-auto px-6 py-16 fade-up">
@@ -352,52 +413,74 @@
                         autoFocus
                         value={name}
                         onChange={e => setName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter' && name.trim()) onSubmit(name.trim()); }}
+                        onKeyDown={e => { if (e.key === 'Enter' && name.trim() && !busy) onSubmit(name.trim()); }}
                         placeholder={placeholder}
-                        className="w-full px-5 py-4 text-xl rounded-xl border-2 border-gray-200 focus:outline-none focus:border-pink-500 transition mb-4"
+                        disabled={busy}
+                        className="w-full px-5 py-4 text-xl rounded-xl border-2 border-gray-200 focus:outline-none focus:border-pink-500 transition mb-4 disabled:bg-gray-50"
                     />
                     <div className="flex gap-3">
                         <button
                             onClick={() => name.trim() && onSubmit(name.trim())}
-                            disabled={!name.trim()}
+                            disabled={!name.trim() || busy}
                             className="flex-1 accent-bg text-white font-bold py-4 rounded-xl hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
-                            {buttonLabel}
+                            {busy ? 'Bezig...' : buttonLabel}
                         </button>
-                        {onCancel && <button onClick={onCancel} className="px-6 py-4 border-2 border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition">Annuleren</button>}
+                        {onCancel && <button onClick={onCancel} disabled={busy} className="px-6 py-4 border-2 border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition disabled:opacity-30">Annuleren</button>}
                     </div>
                 </div>
             );
         }
 
-        function Quiz({ answers, currentQuestion, onAnswer, onNext, onPrev, onComplete, onCancel, participantName, totalParticipants, currentParticipantIndex }) {
+        function CenteredMessage({ icon, title, text, actionLabel, onAction, secondaryActionLabel, onSecondaryAction }) {
+            return (
+                <div className="max-w-xl mx-auto px-6 py-24 text-center fade-up">
+                    {icon && <div className="text-6xl mb-6">{icon}</div>}
+                    <h1 className="text-3xl font-black mb-3">{title}</h1>
+                    <p className="text-gray-600 leading-relaxed mb-8">{text}</p>
+                    {actionLabel && <button onClick={onAction} className="accent-bg text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition">{actionLabel}</button>}
+                    {secondaryActionLabel && <button onClick={onSecondaryAction} className="ml-3 border-2 border-gray-200 text-gray-700 font-medium py-3 px-6 rounded-xl hover:bg-gray-50 transition">{secondaryActionLabel}</button>}
+                </div>
+            );
+        }
+
+        function CopyableLink({ label, url }) {
+            const [copied, setCopied] = useState(false);
+            const copy = () => {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                    });
+                }
+            };
+            return (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">{label}</p>
+                    <div className="flex gap-2">
+                        <input readOnly value={url} className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono truncate" onClick={e => e.target.select()} />
+                        <button onClick={copy} className="accent-bg text-white font-semibold px-4 rounded-lg hover:opacity-90 transition text-sm whitespace-nowrap">
+                            {copied ? '✓ Gekopieerd' : 'Kopieer'}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function Quiz({ answers, currentQuestion, onAnswer, onNext, onPrev, onComplete, onCancel, headerLabel, completing }) {
             const q = questions[currentQuestion];
             const answered = answers[q.id] !== undefined;
-            const progress = (Object.keys(answers).length / questions.length) * 100;
             const positionProgress = ((currentQuestion + 1) / questions.length) * 100;
 
-            // Speelse microcopy
-            const cheers = {
-                5:  "Mooie start! 🚀",
-                10: "Eén derde! 🌱",
-                15: "Halverwege ✨",
-                20: "Twee derde! 🔥",
-                25: "Bijna klaar! 🎯",
-                30: "Laatste vraag 💪"
-            };
+            const cheers = { 5: "Mooie start! 🚀", 10: "Eén derde! 🌱", 15: "Halverwege ✨", 20: "Twee derde! 🔥", 25: "Bijna klaar! 🎯", 30: "Laatste vraag 💪" };
             const cheer = cheers[currentQuestion + 1];
 
             return (
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                     <div className="flex justify-between items-center mb-2 text-sm">
                         <button onClick={onCancel} className="text-gray-500 hover:text-pink-600 transition">← Terug</button>
-                        {participantName && (
-                            <span className="text-gray-500">
-                                Deelnemer {currentParticipantIndex + 1}{totalParticipants ? ` van ${totalParticipants}` : ''}: <strong className="text-gray-900">{participantName}</strong>
-                            </span>
-                        )}
+                        {headerLabel && <span className="text-gray-500 text-right">{headerLabel}</span>}
                     </div>
 
-                    {/* Progress */}
                     <div className="mb-8">
                         <div className="flex justify-between text-xs text-gray-500 mb-2 tracking-wider uppercase">
                             <span>Vraag {currentQuestion + 1} van {questions.length}</span>
@@ -409,10 +492,7 @@
                         {cheer && <p className="text-xs text-pink-600 mt-2 font-medium pop">{cheer}</p>}
                     </div>
 
-                    {/* Vraag-card */}
                     <div key={q.id} className="bg-white rounded-2xl shadow-lg p-6 sm:p-10 slide-in border border-gray-100">
-
-                        {/* Vraag boven (mobile-first) */}
                         <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="text-left">
                                 <p className="text-xs uppercase tracking-wider text-gray-400 mb-2">Eens met links</p>
@@ -423,15 +503,10 @@
                                 <p className="text-base sm:text-lg font-semibold leading-snug">{q.right}</p>
                             </div>
                         </div>
-
-                        {/* Schaal-knoppen */}
                         <div className="grid grid-cols-5 gap-2 mb-2">
                             {[1,2,3,4,5].map(v => (
-                                <button
-                                    key={v}
-                                    onClick={() => onAnswer(q.id, v)}
-                                    className={`scale-btn py-4 rounded-xl font-bold text-lg ${answers[q.id] === v ? 'selected' : ''}`}
-                                >
+                                <button key={v} onClick={() => onAnswer(q.id, v)}
+                                    className={`scale-btn py-4 rounded-xl font-bold text-lg ${answers[q.id] === v ? 'selected' : ''}`}>
                                     {v}
                                 </button>
                             ))}
@@ -445,27 +520,20 @@
                         </div>
                     </div>
 
-                    {/* Nav */}
                     <div className="flex justify-between mt-6">
-                        <button
-                            onClick={onPrev}
-                            disabled={currentQuestion === 0}
+                        <button onClick={onPrev} disabled={currentQuestion === 0}
                             className="px-6 py-3 rounded-xl font-medium border-2 border-gray-200 hover:bg-gray-50 transition disabled:opacity-30 disabled:cursor-not-allowed">
                             Vorige
                         </button>
                         {currentQuestion < questions.length - 1 ? (
-                            <button
-                                onClick={onNext}
-                                disabled={!answered}
+                            <button onClick={onNext} disabled={!answered}
                                 className="accent-bg text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
                                 Volgende →
                             </button>
                         ) : (
-                            <button
-                                onClick={onComplete}
-                                disabled={Object.keys(answers).length < questions.length}
+                            <button onClick={onComplete} disabled={Object.keys(answers).length < questions.length || completing}
                                 className="accent-bg text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
-                                Bekijk resultaat 🎉
+                                {completing ? 'Versturen...' : 'Bekijk resultaat 🎉'}
                             </button>
                         )}
                     </div>
@@ -539,7 +607,7 @@
             return t;
         }
 
-        function ResultIndividual({ name, answers, onReset, onNewParticipant, onViewTeam, onShare, isTeamMode }) {
+        function ResultIndividual({ name, answers, sessionName, submissionStatus, onReset, onNewParticipant, onViewTeam, onShare, mode }) {
             const scores = useMemo(() => calcScores(answers), [answers]);
             const top = useMemo(() => topThree(scores), [scores]);
             const profileText = useMemo(() => buildProfileText(answers), [answers]);
@@ -552,25 +620,34 @@
 
             return (
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 fade-up">
+                    {submissionStatus === 'sent' && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-center no-print">
+                            <p className="text-green-800">
+                                ✅ Je antwoorden zijn verzonden naar <strong>{sessionName || 'de host'}</strong>. Bedankt!
+                            </p>
+                        </div>
+                    )}
+                    {submissionStatus === 'failed' && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-center no-print">
+                            <p className="text-red-800">⚠️ Versturen is mislukt. Probeer Refresh of vraag de host om de sessie te checken.</p>
+                        </div>
+                    )}
+
                     <div className="text-center mb-10">
                         <p className="text-sm uppercase tracking-widest text-gray-500 mb-2">Resultaat{name ? ` voor ${name}` : ''}</p>
                         <h1 className="text-4xl sm:text-5xl font-black mb-3">Jouw merkarchetype-profiel</h1>
                         <p className="text-gray-600">Op basis van het 12-archetypenmodel van Carol S. Pearson</p>
                     </div>
 
-                    {/* Profile blurb */}
                     <div className="accent-soft-bg rounded-2xl p-6 sm:p-8 mb-10 border border-pink-100">
                         <h2 className="text-xl font-bold mb-3">Merkprofiel in één alinea</h2>
                         <p className="text-gray-800 leading-relaxed text-lg">{profileText}</p>
                     </div>
 
-                    {/* Pie + legend */}
                     <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
                         <h2 className="text-xl font-bold mb-6">Archetype-verdeling</h2>
                         <div className="flex flex-col md:flex-row items-center gap-8">
-                            <div className="w-full md:w-1/2">
-                                <PieChart data={pieData} />
-                            </div>
+                            <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
                             <div className="w-full md:w-1/2 space-y-4">
                                 {[top.primary, top.secondary, top.tertiary].map((entry, i) => {
                                     const a = archetypes[entry[0]];
@@ -578,10 +655,7 @@
                                         <div key={i} className="flex items-center gap-3">
                                             <div className="text-3xl">{a.emoji}</div>
                                             <div className="flex-1">
-                                                <div className="flex justify-between font-bold">
-                                                    <span>{a.name}</span>
-                                                    <span style={{ color: a.color }}>{entry[1]}%</span>
-                                                </div>
+                                                <div className="flex justify-between font-bold"><span>{a.name}</span><span style={{ color: a.color }}>{entry[1]}%</span></div>
                                                 <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
                                                     <div className="h-2 rounded-full" style={{ width: `${entry[1]}%`, backgroundColor: a.color }}></div>
                                                 </div>
@@ -593,40 +667,27 @@
                         </div>
                     </div>
 
-                    {/* Detail per archetype */}
                     <h2 className="text-2xl font-bold mb-4">In detail</h2>
                     <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
                     <ArchetypeCard rank={2} archetypeKey={top.secondary[0]} percent={top.secondary[1]} />
                     <ArchetypeCard rank={3} archetypeKey={top.tertiary[0]} percent={top.tertiary[1]} />
 
-                    {/* Acties */}
                     <div className="mt-10 flex flex-wrap gap-3 justify-center no-print">
-                        <button onClick={() => window.print()} className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition">
-                            📄 Download als PDF
-                        </button>
-                        <button onClick={onShare} className="bg-white border-2 accent-border accent-text font-bold px-6 py-3 rounded-xl hover:bg-pink-50 transition">
-                            🔗 Deel via link
-                        </button>
-                        {isTeamMode ? (
-                            <>
-                                <button onClick={onNewParticipant} className="bg-white border-2 border-gray-200 text-gray-800 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition">
-                                    + Volgende deelnemer
-                                </button>
-                                <button onClick={onViewTeam} className="bg-gray-900 text-white font-bold px-6 py-3 rounded-xl hover:bg-gray-800 transition">
-                                    Bekijk team-resultaat
-                                </button>
-                            </>
-                        ) : (
-                            <button onClick={onReset} className="bg-white border-2 border-gray-200 text-gray-800 font-medium px-6 py-3 rounded-xl hover:bg-gray-50 transition">
-                                Nieuwe assessment
-                            </button>
+                        <button onClick={() => window.print()} className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition">📄 Download als PDF</button>
+                        {onShare && <button onClick={onShare} className="bg-white border-2 accent-border accent-text font-bold px-6 py-3 rounded-xl hover:bg-pink-50 transition">🔗 Deel via link</button>}
+                        {mode === 'team' && (<>
+                            <button onClick={onNewParticipant} className="bg-white border-2 border-gray-200 text-gray-800 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition">+ Volgende deelnemer</button>
+                            <button onClick={onViewTeam} className="bg-gray-900 text-white font-bold px-6 py-3 rounded-xl hover:bg-gray-800 transition">Bekijk team-resultaat</button>
+                        </>)}
+                        {(mode === 'solo' || mode === 'session-participant') && onReset && (
+                            <button onClick={onReset} className="bg-white border-2 border-gray-200 text-gray-800 font-medium px-6 py-3 rounded-xl hover:bg-gray-50 transition">Nieuwe assessment</button>
                         )}
                     </div>
                 </div>
             );
         }
 
-        function ResultTeam({ sessionName, participants, onAddParticipant, onReset }) {
+        function ResultTeam({ sessionName, participants, onAddParticipant, onReset, isOnline, status, onClose, onRefresh, refreshing }) {
             const teamScores = useMemo(() => aggregateTeam(participants), [participants]);
             const top = useMemo(() => topThree(teamScores), [teamScores]);
 
@@ -635,89 +696,204 @@
                 { name: archetypes[top.secondary[0]].name, value: top.secondary[1], color: archetypes[top.secondary[0]].color },
                 { name: archetypes[top.tertiary[0]].name, value: top.tertiary[1], color: archetypes[top.tertiary[0]].color }
             ];
-
-            // Stem-overzicht per deelnemer
             const perParticipant = participants.map(p => {
                 const s = calcScores(p.answers);
-                const t = topThree(s);
-                return { name: p.name, top: t };
+                return { name: p.name, top: topThree(s) };
             });
 
             return (
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 fade-up">
                     <div className="text-center mb-10">
-                        <p className="text-sm uppercase tracking-widest text-gray-500 mb-2">Team-resultaat{sessionName ? ` · ${sessionName}` : ''}</p>
+                        <p className="text-sm uppercase tracking-widest text-gray-500 mb-2">
+                            Team-resultaat{sessionName ? ` · ${sessionName}` : ''}
+                            {isOnline && <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                                {status === 'open' ? 'open' : 'gesloten'}
+                            </span>}
+                        </p>
                         <h1 className="text-4xl sm:text-5xl font-black mb-3">Het team-archetype</h1>
                         <p className="text-gray-600">Gebaseerd op {participants.length} {participants.length === 1 ? 'deelnemer' : 'deelnemers'}</p>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-md p-6 sm:p-10 mb-10 border border-gray-100">
-                        <div className="flex flex-col md:flex-row items-center gap-8">
-                            <div className="w-full md:w-1/2">
-                                <PieChart data={pieData} />
+                    {participants.length === 0 ? (
+                        <div className="text-center py-16 bg-gray-50 rounded-2xl">
+                            <p className="text-gray-500">Nog geen antwoorden binnen.{onRefresh ? ' Refresh om te checken.' : ''}</p>
+                        </div>
+                    ) : (<>
+                        <div className="bg-white rounded-2xl shadow-md p-6 sm:p-10 mb-10 border border-gray-100">
+                            <div className="flex flex-col md:flex-row items-center gap-8">
+                                <div className="w-full md:w-1/2"><PieChart data={pieData} /></div>
+                                <div className="w-full md:w-1/2 space-y-4">
+                                    {[top.primary, top.secondary, top.tertiary].map((entry, i) => {
+                                        const a = archetypes[entry[0]];
+                                        return (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <div className="text-4xl">{a.emoji}</div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between font-bold text-lg"><span>{a.name}</span><span style={{ color: a.color }}>{entry[1]}%</span></div>
+                                                    <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                                        <div className="h-2 rounded-full" style={{ width: `${entry[1]}%`, backgroundColor: a.color }}></div>
+                                                    </div>
+                                                    <p className="text-sm text-gray-500 italic mt-1">{a.subtitle}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="w-full md:w-1/2 space-y-4">
-                                {[top.primary, top.secondary, top.tertiary].map((entry, i) => {
-                                    const a = archetypes[entry[0]];
+                        </div>
+
+                        <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
+                            <h2 className="text-xl font-bold mb-4">Stemming per deelnemer</h2>
+                            <div className="space-y-3">
+                                {perParticipant.map((p, i) => {
+                                    const a = archetypes[p.top.primary[0]];
                                     return (
-                                        <div key={i} className="flex items-center gap-3">
-                                            <div className="text-4xl">{a.emoji}</div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between font-bold text-lg">
-                                                    <span>{a.name}</span>
-                                                    <span style={{ color: a.color }}>{entry[1]}%</span>
-                                                </div>
-                                                <div className="w-full bg-gray-100 rounded-full h-2 mt-1">
-                                                    <div className="h-2 rounded-full" style={{ width: `${entry[1]}%`, backgroundColor: a.color }}></div>
-                                                </div>
-                                                <p className="text-sm text-gray-500 italic mt-1">{a.subtitle}</p>
+                                        <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                                            <div className="text-3xl">{a.emoji}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold truncate">{p.name}</p>
+                                                <p className="text-sm text-gray-600">
+                                                    Top: <strong style={{ color: a.color }}>{a.name}</strong> ({p.top.primary[1]}%)
+                                                    <span className="text-gray-400"> · {archetypes[p.top.secondary[0]].name} ({p.top.secondary[1]}%) · {archetypes[p.top.tertiary[0]].name} ({p.top.tertiary[1]}%)</span>
+                                                </p>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Per-deelnemer overzicht */}
-                    <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 mb-10 border border-gray-100">
-                        <h2 className="text-xl font-bold mb-4">Stemming per deelnemer</h2>
-                        <div className="space-y-3">
-                            {perParticipant.map((p, i) => {
-                                const a = archetypes[p.top.primary[0]];
-                                return (
-                                    <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                                        <div className="text-3xl">{a.emoji}</div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-semibold truncate">{p.name}</p>
-                                            <p className="text-sm text-gray-600">
-                                                Top: <strong style={{ color: a.color }}>{a.name}</strong> ({p.top.primary[1]}%)
-                                                <span className="text-gray-400"> · {archetypes[p.top.secondary[0]].name} ({p.top.secondary[1]}%) · {archetypes[p.top.tertiary[0]].name} ({p.top.tertiary[1]}%)</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                        <h2 className="text-2xl font-bold mb-4">Team-archetype in detail</h2>
+                        <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
+                        <ArchetypeCard rank={2} archetypeKey={top.secondary[0]} percent={top.secondary[1]} />
+                        <ArchetypeCard rank={3} archetypeKey={top.tertiary[0]} percent={top.tertiary[1]} />
+                    </>)}
 
-                    {/* Detail teamarchetypes */}
-                    <h2 className="text-2xl font-bold mb-4">Team-archetype in detail</h2>
-                    <ArchetypeCard rank={1} archetypeKey={top.primary[0]} percent={top.primary[1]} isPrimary={true} />
-                    <ArchetypeCard rank={2} archetypeKey={top.secondary[0]} percent={top.secondary[1]} />
-                    <ArchetypeCard rank={3} archetypeKey={top.tertiary[0]} percent={top.tertiary[1]} />
-
-                    {/* Acties */}
                     <div className="mt-10 flex flex-wrap gap-3 justify-center no-print">
-                        <button onClick={() => window.print()} className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition">
-                            📄 Download als PDF
+                        <button onClick={() => window.print()} className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition">📄 Download als PDF</button>
+                        {onRefresh && <button onClick={onRefresh} disabled={refreshing} className="bg-white border-2 accent-border accent-text font-bold px-6 py-3 rounded-xl hover:bg-pink-50 transition disabled:opacity-50">{refreshing ? 'Verversen...' : '🔄 Ververs'}</button>}
+                        {onAddParticipant && <button onClick={onAddParticipant} className="bg-white border-2 border-gray-200 text-gray-800 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition">+ Voeg deelnemer toe</button>}
+                        {onClose && status === 'open' && <button onClick={onClose} className="bg-white border-2 border-amber-400 text-amber-700 font-bold px-6 py-3 rounded-xl hover:bg-amber-50 transition">🔒 Sluit sessie</button>}
+                        <button onClick={onReset} className="bg-white border-2 border-gray-200 text-gray-700 font-medium px-6 py-3 rounded-xl hover:bg-gray-50 transition">Nieuwe sessie</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function SessionHostDashboard({ sessionId, hostToken, onBack }) {
+            const [info, setInfo] = useState(null);
+            const [error, setError] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [refreshing, setRefreshing] = useState(false);
+            const [showResults, setShowResults] = useState(false);
+            const [results, setResults] = useState(null);
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            const participantUrl = `${baseUrl}?session=${sessionId}`;
+            const hostUrl = `${baseUrl}?session=${sessionId}&host=${hostToken}`;
+
+            const refresh = useCallback(async () => {
+                setRefreshing(true);
+                try {
+                    const r = await api('results', { id: sessionId, host: hostToken });
+                    setInfo({ sessionName: r.sessionName, status: r.status, count: r.responses.length });
+                    setResults(r);
+                    setError(null);
+                } catch (e) {
+                    setError(e.message);
+                } finally {
+                    setRefreshing(false);
+                    setLoading(false);
+                }
+            }, [sessionId, hostToken]);
+
+            useEffect(() => { refresh(); }, [refresh]);
+
+            const closeSession = async () => {
+                if (!confirm('Sessie sluiten? Daarna kunnen er geen antwoorden meer worden ingediend.')) return;
+                try {
+                    await api('close', { id: sessionId, host: hostToken });
+                    await refresh();
+                } catch (e) {
+                    alert('Sluiten mislukt: ' + e.message);
+                }
+            };
+
+            if (loading) {
+                return <CenteredMessage icon="⏳" title="Sessie laden..." text="" />;
+            }
+            if (error && !info) {
+                return <CenteredMessage icon="⚠️" title="Kan sessie niet laden"
+                    text={error} actionLabel="Terug naar start" onAction={onBack} />;
+            }
+
+            if (showResults && results) {
+                return <ResultTeam
+                    sessionName={info.sessionName}
+                    participants={results.responses}
+                    isOnline={true}
+                    status={info.status}
+                    onRefresh={refresh}
+                    refreshing={refreshing}
+                    onClose={info.status === 'open' ? closeSession : null}
+                    onReset={onBack}
+                />;
+            }
+
+            return (
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 fade-up">
+                    <button onClick={onBack} className="text-gray-500 hover:text-pink-600 transition mb-6 text-sm">← Terug naar start</button>
+
+                    <div className="mb-8">
+                        <p className="text-sm uppercase tracking-widest text-gray-500 mb-2">
+                            Sessie {info.status === 'open'
+                                ? <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">open</span>
+                                : <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-600">gesloten</span>}
+                        </p>
+                        <h1 className="text-4xl font-black">{info.sessionName}</h1>
+                    </div>
+
+                    {info.status === 'open' && (
+                        <div className="space-y-3 mb-8">
+                            <CopyableLink label="Deelnemers-link (deze deel je)" url={participantUrl} />
+                            <CopyableLink label="Host-link (alleen voor jou — bewaar deze!)" url={hostUrl} />
+                            <p className="text-xs text-gray-500 px-1">⚠️ Bookmark de host-link of bewaar 'm in een notitie. Zonder dat token kom je niet meer bij de resultaten.</p>
+                        </div>
+                    )}
+
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <p className="text-3xl font-black">{info.count}</p>
+                                <p className="text-sm text-gray-500">{info.count === 1 ? 'deelnemer' : 'deelnemers'} ingediend</p>
+                            </div>
+                            <button onClick={refresh} disabled={refreshing}
+                                className="bg-white border-2 accent-border accent-text font-semibold px-4 py-2 rounded-lg hover:bg-pink-50 transition text-sm disabled:opacity-50">
+                                {refreshing ? 'Verversen...' : '🔄 Ververs'}
+                            </button>
+                        </div>
+                        {results?.responses.length > 0 && (
+                            <div className="space-y-2 mt-4">
+                                {results.responses.map((r, i) => (
+                                    <div key={i} className="flex justify-between text-sm py-2 px-3 bg-gray-50 rounded-lg">
+                                        <span className="font-medium">{r.name}</span>
+                                        <span className="text-gray-400 text-xs">{new Date(r.submittedAt).toLocaleTimeString('nl-NL')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                        <button onClick={() => setShowResults(true)} disabled={info.count === 0}
+                            className="accent-bg text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed">
+                            📊 Bekijk team-resultaat
                         </button>
-                        <button onClick={onAddParticipant} className="bg-white border-2 border-gray-200 text-gray-800 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition">
-                            + Voeg deelnemer toe
-                        </button>
-                        <button onClick={onReset} className="bg-white border-2 border-gray-200 text-gray-700 font-medium px-6 py-3 rounded-xl hover:bg-gray-50 transition">
-                            Nieuwe sessie
-                        </button>
+                        {info.status === 'open' && (
+                            <button onClick={closeSession} className="bg-white border-2 border-amber-400 text-amber-700 font-bold px-6 py-3 rounded-xl hover:bg-amber-50 transition">
+                                🔒 Sluit sessie
+                            </button>
+                        )}
                     </div>
                 </div>
             );
@@ -725,47 +901,94 @@
 
         // ─── APP ─────────────────────────────────────────────────────────
         function App() {
-            // screen: intro | team-setup | team-name | quiz | result | team-result | shared
             const [screen, setScreen] = useState('intro');
-            const [mode, setMode] = useState('solo'); // 'solo' | 'team'
+            const [mode, setMode] = useState('solo');
             const [answers, setAnswers] = useState({});
             const [currentQuestion, setCurrentQuestion] = useState(0);
             const [participantName, setParticipantName] = useState('');
             const [sessionName, setSessionName] = useState('');
             const [teamParticipants, setTeamParticipants] = useState([]);
-            const [hasSavedSolo, setHasSavedSolo] = useState(false);
-            const [hasSavedTeam, setHasSavedTeam] = useState(false);
-            const [shareUrl, setShareUrl] = useState('');
+            const [savedSession, setSavedSession] = useState(null);
+            const [hostedSessions, setHostedSessions] = useState([]);
+            const [busy, setBusy] = useState(false);
+            const [submissionStatus, setSubmissionStatus] = useState(null);
+            const [completing, setCompleting] = useState(false);
 
-            // ─ URL hash check op load (gedeelde resultaten) ────
+            // Online sessie state
+            const [activeSessionId, setActiveSessionId] = useState(null);
+            const [activeHostToken, setActiveHostToken] = useState(null);
+
+            // ─ URL routing op load ────────────────────────────
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
+                const sessionParam = params.get('session');
+                const hostParam = params.get('host');
                 const r = params.get('r');
-                const n = params.get('n');
+
+                // 1. Gedeeld solo-resultaat
                 if (r) {
                     const decoded = decodeAnswers(r);
                     if (decoded && Object.keys(decoded).length === 30) {
                         setAnswers(decoded);
-                        setParticipantName(n ? decodeURIComponent(n) : '');
+                        setParticipantName(params.get('n') ? decodeURIComponent(params.get('n')) : '');
                         setMode('solo');
                         setScreen('result');
                         return;
                     }
                 }
-                // Geen URL → check localStorage
+
+                // 2. Online sessie — host
+                if (sessionParam && hostParam) {
+                    setActiveSessionId(sessionParam);
+                    setActiveHostToken(hostParam);
+                    setMode('session-host');
+                    setScreen('session-host');
+                    return;
+                }
+
+                // 3. Online sessie — deelnemer
+                if (sessionParam) {
+                    setActiveSessionId(sessionParam);
+                    setMode('session-participant');
+                    setScreen('session-checking');
+                    (async () => {
+                        try {
+                            const info = await api('session_info', { id: sessionParam });
+                            if (info.error) {
+                                setScreen('session-not-found');
+                            } else if (info.status === 'closed') {
+                                setSessionName(info.name);
+                                setScreen('session-closed');
+                            } else {
+                                setSessionName(info.name);
+                                setScreen('session-name');
+                            }
+                        } catch (e) {
+                            setScreen('session-error');
+                        }
+                    })();
+                    return;
+                }
+
+                // 4. Lokale onafgemaakte sessie?
                 try {
                     const raw = localStorage.getItem(STORAGE_KEY);
                     if (raw) {
                         const saved = JSON.parse(raw);
-                        if (saved.solo && Object.keys(saved.solo.answers || {}).length > 0) setHasSavedSolo(true);
-                        if (saved.team && (saved.team.participants?.length > 0 || Object.keys(saved.team.currentAnswers || {}).length > 0)) setHasSavedTeam(true);
+                        if (saved.solo && Object.keys(saved.solo.answers || {}).length > 0) {
+                            setSavedSession({ type: 'solo', ...saved.solo });
+                        } else if (saved.team && (saved.team.participants?.length > 0 || Object.keys(saved.team.currentAnswers || {}).length > 0)) {
+                            setSavedSession({ type: 'team', ...saved.team });
+                        }
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) {}
+
+                setHostedSessions(getHostedSessions());
             }, []);
 
-            // ─ Auto-save naar localStorage ─────────────────────
+            // ─ Auto-save lokale state ─────────────────────────
             useEffect(() => {
-                if (screen === 'shared' || screen === 'intro') return;
+                if (screen === 'intro' || mode === 'session-participant' || mode === 'session-host') return;
                 try {
                     const raw = localStorage.getItem(STORAGE_KEY);
                     const state = raw ? JSON.parse(raw) : {};
@@ -781,7 +1004,7 @@
                         };
                     }
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                } catch (e) { /* quota probably */ }
+                } catch (e) {}
             }, [screen, mode, answers, currentQuestion, sessionName, teamParticipants, participantName]);
 
             const startSolo = () => {
@@ -791,8 +1014,7 @@
                 setParticipantName('');
                 setScreen('quiz');
             };
-
-            const startTeam = () => {
+            const startTeamLocal = () => {
                 setMode('team');
                 setAnswers({});
                 setCurrentQuestion(0);
@@ -801,61 +1023,73 @@
                 setParticipantName('');
                 setScreen('team-setup');
             };
-
-            const resumeSolo = () => {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').solo;
-                    if (saved) {
-                        setMode('solo');
-                        setAnswers(saved.answers || {});
-                        setCurrentQuestion(saved.currentQuestion || 0);
-                        setScreen('quiz');
-                    }
-                } catch (e) {}
+            const startSessionCreate = () => {
+                if (!API_AVAILABLE) {
+                    alert('Online team-modus is nog niet geconfigureerd. Vraag de eigenaar van deze tool om SETUP.md te volgen.');
+                    return;
+                }
+                setMode('session-host');
+                setSessionName('');
+                setScreen('session-create');
             };
 
-            const resumeTeam = () => {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').team;
-                    if (saved) {
-                        setMode('team');
-                        setSessionName(saved.sessionName || '');
-                        setTeamParticipants(saved.participants || []);
-                        setParticipantName(saved.currentParticipantName || '');
-                        setAnswers(saved.currentAnswers || {});
-                        setCurrentQuestion(saved.currentQuestion || 0);
-                        // Bepaal waar we zitten
-                        if (Object.keys(saved.currentAnswers || {}).length === 30) {
-                            setScreen('result');
-                        } else if (saved.currentParticipantName && Object.keys(saved.currentAnswers || {}).length > 0) {
-                            setScreen('quiz');
-                        } else if (saved.participants?.length > 0) {
-                            setScreen('team-name');
-                        } else {
-                            setScreen('team-setup');
-                        }
-                    }
-                } catch (e) {}
+            const handleResume = () => {
+                if (!savedSession) return;
+                if (savedSession.type === 'solo') {
+                    setMode('solo');
+                    setAnswers(savedSession.answers || {});
+                    setCurrentQuestion(savedSession.currentQuestion || 0);
+                    setScreen('quiz');
+                } else {
+                    setMode('team');
+                    setSessionName(savedSession.sessionName || '');
+                    setTeamParticipants(savedSession.participants || []);
+                    setParticipantName(savedSession.currentParticipantName || '');
+                    setAnswers(savedSession.currentAnswers || {});
+                    setCurrentQuestion(savedSession.currentQuestion || 0);
+                    if (Object.keys(savedSession.currentAnswers || {}).length === 30) setScreen('result');
+                    else if (savedSession.currentParticipantName && Object.keys(savedSession.currentAnswers || {}).length > 0) setScreen('quiz');
+                    else if (savedSession.participants?.length > 0) setScreen('team-name');
+                    else setScreen('team-setup');
+                }
             };
 
             const cancelToIntro = () => {
                 if (confirm('Sessie afbreken? Je voortgang wordt bewaard zodat je later kunt hervatten.')) {
                     setScreen('intro');
+                    setHostedSessions(getHostedSessions());
                 }
             };
 
             const handleAnswer = (qid, val) => {
+                const wasUnanswered = answers[qid] === undefined;
                 setAnswers(prev => ({ ...prev, [qid]: val }));
-                // Auto-advance: als een vraag voor het eerst beantwoord wordt en niet de laatste is
-                if (answers[qid] === undefined && currentQuestion < questions.length - 1) {
+                if (wasUnanswered && currentQuestion < questions.length - 1) {
                     setTimeout(() => setCurrentQuestion(c => c + 1), 350);
                 }
             };
 
-            const handleComplete = () => setScreen('result');
+            const handleComplete = async () => {
+                if (mode === 'session-participant') {
+                    setCompleting(true);
+                    try {
+                        await api('submit', {
+                            id: activeSessionId,
+                            name: participantName,
+                            answers: JSON.stringify(answers)
+                        });
+                        setSubmissionStatus('sent');
+                    } catch (e) {
+                        setSubmissionStatus('failed');
+                    }
+                    setCompleting(false);
+                    setScreen('result');
+                    return;
+                }
+                setScreen('result');
+            };
 
             const handleNewParticipant = () => {
-                // Sla de huidige deelnemer op in het team
                 setTeamParticipants(prev => [...prev, { name: participantName, answers, completedAt: Date.now() }]);
                 setAnswers({});
                 setCurrentQuestion(0);
@@ -864,7 +1098,6 @@
             };
 
             const handleViewTeam = () => {
-                // Voeg de huidige deelnemer ook toe als nog niet gedaan
                 let participants = teamParticipants;
                 if (Object.keys(answers).length === 30 && participantName) {
                     const exists = teamParticipants.some(p => p.name === participantName && JSON.stringify(p.answers) === JSON.stringify(answers));
@@ -884,52 +1117,123 @@
             };
 
             const handleReset = () => {
-                if (!confirm('Weet je zeker dat je opnieuw wilt beginnen? Alle antwoorden gaan verloren.')) return;
+                if (!confirm('Weet je zeker dat je opnieuw wilt beginnen?')) return;
                 try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
                 setAnswers({});
                 setCurrentQuestion(0);
                 setParticipantName('');
                 setSessionName('');
                 setTeamParticipants([]);
+                setActiveSessionId(null);
+                setActiveHostToken(null);
+                setSubmissionStatus(null);
+                setSavedSession(null);
                 setScreen('intro');
-                setHasSavedSolo(false);
-                setHasSavedTeam(false);
-                // Verwijder URL params bij reset
-                if (window.location.search) {
-                    window.history.replaceState({}, '', window.location.pathname);
-                }
+                setHostedSessions(getHostedSessions());
+                if (window.location.search) window.history.replaceState({}, '', window.location.pathname);
             };
 
             const handleShare = () => {
                 const encoded = encodeAnswers(answers);
                 const url = `${window.location.origin}${window.location.pathname}?r=${encoded}${participantName ? `&n=${encodeURIComponent(participantName)}` : ''}`;
-                setShareUrl(url);
                 if (navigator.clipboard) {
-                    navigator.clipboard.writeText(url).then(() => {
-                        alert('Link gekopieerd naar klembord!\n\n' + url);
-                    }).catch(() => {
-                        prompt('Kopieer deze link:', url);
-                    });
-                } else {
-                    prompt('Kopieer deze link:', url);
+                    navigator.clipboard.writeText(url).then(() => alert('Link gekopieerd!\n\n' + url)).catch(() => prompt('Kopieer:', url));
+                } else { prompt('Kopieer:', url); }
+            };
+
+            const handleSessionCreate = async (name) => {
+                setBusy(true);
+                try {
+                    const res = await api('create_session', { name });
+                    rememberHostedSession(res.sessionId, res.hostToken, res.name);
+                    setActiveSessionId(res.sessionId);
+                    setActiveHostToken(res.hostToken);
+                    setSessionName(res.name);
+                    // Update URL
+                    const newUrl = `${window.location.pathname}?session=${res.sessionId}&host=${res.hostToken}`;
+                    window.history.replaceState({}, '', newUrl);
+                    setScreen('session-host');
+                } catch (e) {
+                    alert('Sessie aanmaken mislukt: ' + e.message);
                 }
+                setBusy(false);
+            };
+
+            const handleParticipantStart = (name) => {
+                setParticipantName(name);
+                setAnswers({});
+                setCurrentQuestion(0);
+                setScreen('quiz');
             };
 
             // ─ Render ────────────────────────────────────────
             if (screen === 'intro') {
                 return <IntroScreen
                     onSolo={startSolo}
-                    onTeam={startTeam}
-                    hasSavedSolo={hasSavedSolo}
-                    hasSavedTeam={hasSavedTeam}
-                    onResumeSolo={resumeSolo}
-                    onResumeTeam={resumeTeam}
+                    onTeamLocal={startTeamLocal}
+                    onSessionCreate={startSessionCreate}
+                    savedSession={savedSession}
+                    hostedSessions={hostedSessions}
+                    onResume={handleResume}
                 />;
             }
+
+            // Online sessie — deelnemer flow
+            if (screen === 'session-checking') {
+                return <CenteredMessage icon="⏳" title="Sessie checken..." text="Even kijken of de sessie open is." />;
+            }
+            if (screen === 'session-not-found') {
+                return <CenteredMessage icon="🔍" title="Sessie niet gevonden"
+                    text="De link klopt niet of de sessie is verwijderd. Vraag de host om een nieuwe link."
+                    actionLabel="Naar de startpagina" onAction={handleReset} />;
+            }
+            if (screen === 'session-closed') {
+                return <CenteredMessage icon="🔒" title="Sessie gesloten"
+                    text={`De sessie "${sessionName}" is door de host gesloten. Je kunt geen antwoorden meer indienen.`}
+                    actionLabel="Naar de startpagina" onAction={handleReset} />;
+            }
+            if (screen === 'session-error') {
+                return <CenteredMessage icon="⚠️" title="Verbindingsfout"
+                    text="De sessie kon niet worden geladen. Check je internetverbinding en probeer opnieuw."
+                    actionLabel="Probeer opnieuw" onAction={() => window.location.reload()}
+                    secondaryActionLabel="Startpagina" onSecondaryAction={handleReset} />;
+            }
+            if (screen === 'session-name') {
+                return <NameInput
+                    title={`Sessie: ${sessionName}`}
+                    subtitle="Vul je naam in om te beginnen. De host ziet je antwoorden."
+                    placeholder="Voornaam of bijnaam"
+                    buttonLabel="Start test →"
+                    onSubmit={handleParticipantStart}
+                    onCancel={handleReset}
+                />;
+            }
+
+            // Online sessie — host flow
+            if (screen === 'session-create') {
+                return <NameInput
+                    title="Online sessie starten"
+                    subtitle="Geef de sessie een naam, bv. 'Marketingteam Q2'."
+                    placeholder="Naam van de sessie"
+                    buttonLabel="Aanmaken →"
+                    busy={busy}
+                    onSubmit={handleSessionCreate}
+                    onCancel={() => setScreen('intro')}
+                />;
+            }
+            if (screen === 'session-host') {
+                return <SessionHostDashboard
+                    sessionId={activeSessionId}
+                    hostToken={activeHostToken}
+                    onBack={handleReset}
+                />;
+            }
+
+            // Lokaal team flow
             if (screen === 'team-setup') {
                 return <NameInput
                     title="Team-sessie starten"
-                    subtitle="Geef de sessie een naam, bijvoorbeeld 'Marketingteam Q2'."
+                    subtitle="Geef de sessie een naam, bv. 'Marketingteam Q2'."
                     placeholder="Naam van de sessie"
                     buttonLabel="Volgende →"
                     onSubmit={(name) => { setSessionName(name); setScreen('team-name'); }}
@@ -946,7 +1250,12 @@
                     onCancel={teamParticipants.length > 0 ? () => setScreen('team-result') : () => setScreen('intro')}
                 />;
             }
+
+            // Quiz (alle modes)
             if (screen === 'quiz') {
+                let headerLabel = null;
+                if (mode === 'team') headerLabel = `Deelnemer ${teamParticipants.length + 1}: ${participantName}`;
+                if (mode === 'session-participant') headerLabel = `Sessie: ${sessionName} · ${participantName}`;
                 return <Quiz
                     answers={answers}
                     currentQuestion={currentQuestion}
@@ -954,23 +1263,28 @@
                     onNext={() => setCurrentQuestion(c => Math.min(questions.length - 1, c + 1))}
                     onPrev={() => setCurrentQuestion(c => Math.max(0, c - 1))}
                     onComplete={handleComplete}
-                    onCancel={cancelToIntro}
-                    participantName={mode === 'team' ? participantName : null}
-                    totalParticipants={null}
-                    currentParticipantIndex={teamParticipants.length}
+                    onCancel={mode === 'session-participant' ? handleReset : cancelToIntro}
+                    headerLabel={headerLabel}
+                    completing={completing}
                 />;
             }
+
+            // Resultaat
             if (screen === 'result') {
                 return <ResultIndividual
                     name={participantName}
                     answers={answers}
-                    isTeamMode={mode === 'team'}
+                    sessionName={sessionName}
+                    submissionStatus={submissionStatus}
+                    mode={mode}
                     onReset={handleReset}
                     onNewParticipant={handleNewParticipant}
                     onViewTeam={handleViewTeam}
-                    onShare={handleShare}
+                    onShare={mode !== 'session-participant' ? handleShare : null}
                 />;
             }
+
+            // Team-resultaat lokaal
             if (screen === 'team-result') {
                 return <ResultTeam
                     sessionName={sessionName}
@@ -979,7 +1293,8 @@
                     onReset={handleReset}
                 />;
             }
-            return <div className="text-center p-12">Loading...</div>;
+
+            return <CenteredMessage icon="🤔" title="Onbekend scherm" text="Er ging iets mis met de navigatie." actionLabel="Terug naar start" onAction={handleReset} />;
         }
 
         ReactDOM.render(<App />, document.getElementById('root'));
