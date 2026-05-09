@@ -1001,6 +1001,22 @@
                 alert('Content-cache gewist. Refresh de pagina om de nieuwste vragen/archetypen uit de Sheet op te halen.');
             };
 
+            const deleteSessionConfirm = async (s) => {
+                const respLabel = s.responseCount === 1 ? 'antwoord' : 'antwoorden';
+                const msg = `Verwijder sessie "${s.name}"?\n\n` +
+                    `Dit verwijdert óók de ${s.responseCount} ingevulde ${respLabel} (in de Responses-tab). ` +
+                    `Niet ongedaan te maken.\n\n` +
+                    `Doorgaan?`;
+                if (!confirm(msg)) return;
+                try {
+                    const res = await api('delete_session', { id: s.id, admin: key });
+                    await load(key); // refresh
+                    alert(`Verwijderd: 1 sessie + ${res.deletedResponses || 0} antwoord(en).`);
+                } catch (e) {
+                    alert('Verwijderen mislukt: ' + e.message);
+                }
+            };
+
             const filtered = sessions ? sessions.filter(s =>
                 filter === 'all' ? true : s.status === filter
             ) : [];
@@ -1105,6 +1121,11 @@
                                                     }}
                                                     className="text-sm bg-white border-2 border-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition">
                                                     Kopieer deelnemers-link
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteSessionConfirm(s)}
+                                                    className="text-sm bg-white border-2 border-red-200 text-red-700 font-medium px-4 py-2 rounded-lg hover:bg-red-50 transition ml-auto">
+                                                    🗑️ Verwijder
                                                 </button>
                                             </div>
                                         </div>

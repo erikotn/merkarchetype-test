@@ -60,6 +60,7 @@ function handleRequest(e) {
       case 'results':        result = getResults(params);    break;
       case 'close':          result = closeSession(params);  break;
       case 'list_sessions':  result = listSessions(params);  break;
+      case 'delete_session': result = deleteSession(params); break;
       case 'get_config':     result = getConfig();           break;
       default:               result = { error: 'Onbekende actie: ' + params.action };
     }
@@ -215,6 +216,51 @@ function closeSession(params) {
 
 function getAdminKey() {
   return PropertiesService.getScriptProperties().getProperty('ADMIN_KEY') || '';
+}
+
+/**
+ * Verwijdert een sessie + alle bijbehorende responses.
+ *
+ * Toegang: óf met juiste host_token (params.host), óf met admin-key
+ * (params.admin). Werk altijd binnen LockService zodat een tegelijkertijd
+ * binnenkomende submit niet halverwege strandt.
+ */
+function deleteSession(params) {
+  if (!params.id) return { error: 'Sessie-ID ontbreekt' };
+  const session = findSession(params.id);
+  if (!session) return { error: 'Sessie niet gevonden' };
+
+  const adminKey = getAdminKey();
+  const isHost = params.host && params.host === session.hostToken;
+  const isAdmin = params.admin && adminKey && params.admin === adminKey;
+  if (!isHost && !isAdmin) return { error: 'Geen toegang' };
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+  try {
+    // 1. Wis bijbehorende responses (achteruit lopen zodat indices niet schuiven)
+    const responsesSheet = getSheet(RESPONSES_TAB);
+    const data = responsesSheet.getDataRange().getValues();
+    let deletedResponses = 0;
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0] || '').trim() === params.id) {
+        responsesSheet.deleteRow(i + 1);
+        deletedResponses++;
+      }
+    }
+
+    // 2. Wis sessie-rij. findSession heeft de huidige row-index; check 'm
+    // opnieuw want we kunnen geen vertrouwen meer hebben op de eerder berekende
+    // sessie-row als er tussendoor iets is gewijzigd.
+    const refreshed = findSession(params.id);
+    if (refreshed) {
+      getSheet(SESSIONS_TAB).deleteRow(refreshed.row);
+    }
+
+    return { ok: true, deletedResponses: deletedResponses };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /**
