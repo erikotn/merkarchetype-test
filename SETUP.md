@@ -152,6 +152,29 @@ De 4 kolommen na het runnen:
 
 ---
 
+## Stap 8b — Tone of Voice-kolommen toevoegen (optioneel)
+
+Verrijk de Combinations-tab met 4 extra kolommen voor operationeel ToV-werk. Niet zichtbaar in de test-UI — bedoeld als naslag bij merksessies, copywriting of input voor AI-tools.
+
+Run `voegToneOfVoiceToe` (zelfde dropdown-route als de andere setup-functies). De functie voegt 4 kolommen toe aan de bestaande Combinations-tab en vult 132 rijen met voorgeschreven teksten:
+
+- `tone` — 1-2 zinnen die de gecombineerde stem omschrijven
+- `dos` — 4 concrete handelingen, pipe-gescheiden (`|`)
+- `donts` — 4 valkuilen, pipe-gescheiden (`|`)
+- `example` — 1 voorbeeldzin die de combinatie hoorbaar maakt
+
+**Voorbeeld** voor `hero + sage` (Held primair, Wijze secundair):
+- *tone*: "Doortastend en onderbouwd. Zelfverzekerd zonder bluf — beslissingen worden uitgesproken én verantwoord."
+- *dos*: "Spreek in actie-werkwoorden | Wees concreet over wat we gaan doen | Onderbouw uitspraken met feit of bron | Leg de redenering uit"
+- *donts*: "Vermijd onnodige slagen om de arm | Geen marketing-bombarie | Vermijd jargon dat alleen experts begrijpen | Niet uit de hoogte spreken"
+- *example*: "We hebben drie maanden onderzoek gedaan, en weten waar we morgen mee beginnen."
+
+> 💡 Bewerk de teksten gerust in de Sheet — de tool leest ze live (cache 1 uur). De ToV-velden komen via `get_config` mee in de API-response, zodat toekomstige tool-uitbreidingen er gebruik van kunnen maken zonder code-wijziging.
+
+Wil je de ToV-data opnieuw plaatsen? Run `voegToneOfVoiceToe` nog eens — vraagt om bevestiging als de kolommen al gevuld zijn.
+
+---
+
 ## Stap 9 — Diagram uploaden (optioneel maar mooi)
 
 Het intro-scherm toont een afbeelding van het merkarchetype-wiel. Upload het bestand `archetype-wheel.png` naar de root van je GitHub-repo:
